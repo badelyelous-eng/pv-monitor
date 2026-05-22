@@ -237,25 +237,54 @@
     }
 
     /* Sunrise card */
-    .sunrise-card {
+    .depletion-card {
       background: var(--surface);
       border: 0.5px solid var(--border);
-      border-radius: 14px;
-      padding: 14px 16px;
+      border-radius: 16px;
+      padding: 18px 20px;
       margin-bottom: 14px;
+      position: relative;
+      overflow: hidden;
+    }
+    .depletion-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: var(--depletion-color, var(--text3));
+      transition: background 0.4s;
+    }
+    .depletion-top {
       display: flex;
-      align-items: center;
-      gap: 14px;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 10px;
     }
-    .sunrise-icon {
-      font-size: 28px;
-      flex-shrink: 0;
+    .depletion-label {
+      font-size: 11px;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
     }
-    .sunrise-info { flex: 1; }
-    .sunrise-title { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 4px; }
-    .sunrise-val { font-size: 14px; font-weight: 600; color: var(--text); }
-    .sunrise-val.ok { color: var(--green); }
-    .sunrise-val.warn { color: var(--red); }
+    .depletion-time {
+      font-family: 'DM Mono', monospace;
+      font-size: 40px;
+      font-weight: 500;
+      color: var(--depletion-color, var(--text3));
+      line-height: 1;
+      transition: color 0.4s;
+    }
+    .depletion-bottom {
+      font-size: 13px;
+      font-weight: 600;
+      padding: 6px 10px;
+      border-radius: 8px;
+      display: inline-block;
+      transition: background 0.4s, color 0.4s;
+    }
+    .depletion-bottom.ok { background: rgba(77,222,138,0.1); color: var(--green); }
+    .depletion-bottom.warn { background: rgba(240,80,80,0.1); color: var(--red); }
+    .depletion-bottom.neutral { background: var(--bg3); color: var(--text3); }
 
     /* Section label */
     .section-label {
@@ -462,13 +491,13 @@
     </div>
   </div>
 
-  <!-- Sunrise -->
-  <div class="sunrise-card">
-    <div class="sunrise-icon">🌅</div>
-    <div class="sunrise-info">
-      <div class="sunrise-title">Relais solaire estimé</div>
-      <div class="sunrise-val" id="sunrise-msg">—</div>
+  <!-- Épuisement + Sunrise -->
+  <div class="depletion-card" id="depletion-card">
+    <div class="depletion-top">
+      <div class="depletion-label">Batterie épuisée à</div>
+      <div class="depletion-time" id="depletion-time">—</div>
     </div>
+    <div class="depletion-bottom" id="sunrise-msg">—</div>
   </div>
 
   <!-- Appareils -->
@@ -519,8 +548,30 @@ const devices = [
   { group: 'Autre', name: 'Surpresseur', w: 450, max: 1, qty: 0 },
 ];
 
+const STATE_KEY = 'pv_state';
+
 let battPct = 65;
 let sunriseTime = localStorage.getItem(SUNRISE_KEY) || '06:00';
+
+function saveState() {
+  const state = { battPct, qtys: devices.map(d => d.qty) };
+  localStorage.setItem(STATE_KEY, JSON.stringify(state));
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STATE_KEY);
+    if (!raw) return;
+    const state = JSON.parse(raw);
+    if (state.battPct !== undefined) {
+      battPct = state.battPct;
+      document.getElementById('batt-range').value = battPct;
+    }
+    if (Array.isArray(state.qtys)) {
+      state.qtys.forEach((q, i) => { if (devices[i]) devices[i].qty = q; });
+    }
+  } catch(e) {}
+}
 
 function formatHours(h) {
   if (!isFinite(h) || h <= 0) return '—';
@@ -531,23 +582,32 @@ function formatHours(h) {
   return hrs + 'h ' + mins + 'min';
 }
 
-function calcSunrise(autoH) {
-  if (!isFinite(autoH) || autoH <= 0) return { msg: '—', ok: null };
-  const [sh, sm] = sunriseTime.split(':').map(Number);
+function calcDepletion(autoH) {
+  if (!isFinite(autoH) || autoH <= 0) return { time: '—', srMsg: '—', srOk: null, color: null };
   const now = new Date();
   const nowMins = now.getHours() * 60 + now.getMinutes();
+  const autoMins = Math.round(autoH * 60);
+  const depletedMins = nowMins + autoMins;
+  const dH = Math.floor(depletedMins / 60) % 24;
+  const dM = depletedMins % 60;
+  const timeStr = String(dH).padStart(2,'0') + ':' + String(dM).padStart(2,'0');
+
+  const [sh, sm] = sunriseTime.split(':').map(Number);
   const sunriseMins = sh * 60 + sm;
   let diffMins = sunriseMins - nowMins;
   if (diffMins < 0) diffMins += 1440;
-  const autoMins = autoH * 60;
+
+  let srMsg, srOk, color;
   if (autoMins >= diffMins) {
-    return { msg: 'Batterie tient jusqu\'au lever ✓', ok: true };
+    srMsg = '✓ Batterie tient jusqu\'au lever du soleil (' + sunriseTime + ')';
+    srOk = true;
+    color = 'var(--green)';
   } else {
-    const depletedAt = nowMins + autoMins;
-    const dH = Math.floor(depletedAt / 60) % 24;
-    const dM = Math.round(depletedAt % 60);
-    return { msg: 'Épuisée vers ' + String(dH).padStart(2,'0') + ':' + String(dM).padStart(2,'0'), ok: false };
+    srMsg = '✗ Épuisée avant le lever du soleil (' + sunriseTime + ')';
+    srOk = false;
+    color = 'var(--red)';
   }
+  return { time: timeStr, srMsg, srOk, color };
 }
 
 function getColor(pct) {
@@ -585,10 +645,23 @@ function updateStats() {
   document.getElementById('stat-load').innerHTML = total.toLocaleString('fr-FR') + ' <span class="stat-unit">W</span>';
   document.getElementById('stat-auto').textContent = total > 0 ? formatHours(autoH) : '—';
 
-  const sr = calcSunrise(autoH);
-  const srEl = document.getElementById('sunrise-msg');
-  srEl.textContent = sr.msg;
-  srEl.className = 'sunrise-val' + (sr.ok === true ? ' ok' : sr.ok === false ? ' warn' : '');
+  const card = document.getElementById('depletion-card');
+  const timeEl = document.getElementById('depletion-time');
+  const msgEl = document.getElementById('sunrise-msg');
+
+  if (total === 0) {
+    timeEl.textContent = '—';
+    card.style.setProperty('--depletion-color', 'var(--text3)');
+    msgEl.textContent = 'Aucun appareil actif';
+    msgEl.className = 'depletion-bottom neutral';
+  } else {
+    const d = calcDepletion(autoH);
+    timeEl.textContent = d.time;
+    card.style.setProperty('--depletion-color', d.color);
+    msgEl.textContent = d.srMsg;
+    msgEl.className = 'depletion-bottom' + (d.srOk === true ? ' ok' : d.srOk === false ? ' warn' : ' neutral');
+  }
+  saveState();
 }
 
 function changeQty(i, delta) {
@@ -649,8 +722,9 @@ if ('serviceWorker' in navigator) {
 }
 
 // Init
+loadState();
 renderDevices();
-updateBatt(65);
+updateBatt(battPct);
 </script>
 </body>
 </html>

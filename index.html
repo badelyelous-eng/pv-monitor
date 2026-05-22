@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0f1a14">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="PV Monitor">
+  <title>PV Monitor</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Sora:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1a14;
+      --bg2: #162110;
+      --bg3: #1e2d1a;
+      --surface: #1a2b1f;
+      --surface2: #223328;
+      --border: rgba(255,255,255,0.07);
+      --border2: rgba(255,255,255,0.12);
+      --text: #e8f0e4;
+      --text2: #8aab8a;
+      --text3: #5a7a5a;
+      --green: #4dde8a;
+      --green-dim: #2a6645;
+      --amber: #f0b429;
+      --amber-dim: #7a5510;
+      --red: #f05050;
+      --red-dim: #7a2020;
+      --accent: #4dde8a;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Sora', sans-serif;
+      font-size: 16px;
+      -webkit-font-smoothing: antialiased;
+      overscroll-behavior: none;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      min-height: -webkit-fill-available;
+    }
+
+    /* Header */
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--bg);
+      border-bottom: 0.5px solid var(--border);
+      padding: env(safe-area-inset-top, 0) 20px 0;
+    }
+    .header-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 56px;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .logo-icon {
+      width: 28px;
+      height: 28px;
+    }
+    .logo-text {
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: var(--text);
+    }
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .settings-btn {
+      background: none;
+      border: 0.5px solid var(--border2);
+      border-radius: 8px;
+      color: var(--text2);
+      font-size: 18px;
+      width: 36px;
+      height: 36px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Main scroll area */
+    .main { flex: 1; overflow-y: auto; padding: 16px 16px calc(env(safe-area-inset-bottom, 0) + 16px); }
+
+    /* Battery section */
+    .battery-block {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: 16px;
+      padding: 18px 20px;
+      margin-bottom: 14px;
+      position: relative;
+      overflow: hidden;
+    }
+    .battery-block::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: var(--bar-color, var(--green));
+      transition: background 0.4s;
+    }
+    .batt-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .batt-pct {
+      font-family: 'DM Mono', monospace;
+      font-size: 48px;
+      font-weight: 500;
+      line-height: 1;
+      color: var(--bar-color, var(--green));
+      transition: color 0.4s;
+    }
+    .batt-meta {
+      text-align: right;
+    }
+    .batt-kwh {
+      font-family: 'DM Mono', monospace;
+      font-size: 18px;
+      font-weight: 500;
+      color: var(--text);
+    }
+    .batt-kwh-label {
+      font-size: 11px;
+      color: var(--text3);
+      margin-top: 2px;
+    }
+    .batt-pill {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 3px 10px;
+      border-radius: 20px;
+      margin-top: 6px;
+      transition: background 0.4s, color 0.4s;
+    }
+    .pill-good { background: rgba(77,222,138,0.12); color: var(--green); }
+    .pill-mid  { background: rgba(240,180,41,0.12); color: var(--amber); }
+    .pill-low  { background: rgba(240,80,80,0.12); color: var(--red); }
+
+    /* Track */
+    .track-wrap { position: relative; margin-top: 4px; }
+    .track-bg {
+      height: 6px;
+      background: var(--bg3);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+    .track-fill {
+      height: 100%;
+      border-radius: 3px;
+      background: var(--bar-color, var(--green));
+      transition: width 0.2s, background 0.4s;
+    }
+    input[type=range] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 36px;
+      background: transparent;
+      cursor: pointer;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--bar-color, var(--green));
+      border: 3px solid var(--bg);
+      box-shadow: 0 0 0 1px var(--bar-color, var(--green));
+      transition: background 0.4s, box-shadow 0.4s;
+    }
+    input[type=range]::-webkit-slider-runnable-track {
+      height: 6px;
+      background: var(--bg3);
+      border-radius: 3px;
+    }
+
+    /* Stats grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 16px;
+    }
+    .stat-label {
+      font-size: 11px;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      margin-bottom: 6px;
+    }
+    .stat-val {
+      font-family: 'DM Mono', monospace;
+      font-size: 22px;
+      font-weight: 500;
+      color: var(--text);
+      line-height: 1.1;
+    }
+    .stat-unit {
+      font-size: 13px;
+      color: var(--text2);
+      font-weight: 400;
+    }
+
+    /* Sunrise card */
+    .sunrise-card {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 16px;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .sunrise-icon {
+      font-size: 28px;
+      flex-shrink: 0;
+    }
+    .sunrise-info { flex: 1; }
+    .sunrise-title { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 4px; }
+    .sunrise-val { font-size: 14px; font-weight: 600; color: var(--text); }
+    .sunrise-val.ok { color: var(--green); }
+    .sunrise-val.warn { color: var(--red); }
+
+    /* Section label */
+    .section-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      color: var(--text3);
+      margin: 18px 0 8px 2px;
+    }
+
+    /* Device list */
+    .device-block {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      margin-bottom: 14px;
+    }
+    .group-header {
+      padding: 8px 18px;
+      background: var(--bg3);
+      border-bottom: 0.5px solid var(--border);
+    }
+    .group-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text3);
+    }
+    .device-row {
+      display: flex;
+      align-items: center;
+      padding: 11px 18px;
+      border-bottom: 0.5px solid var(--border);
+      gap: 10px;
+      transition: background 0.15s;
+    }
+    .device-row:last-child { border-bottom: none; }
+    .device-row.active { background: rgba(77,222,138,0.04); }
+    .device-name {
+      flex: 1;
+      font-size: 14px;
+      color: var(--text);
+      font-weight: 400;
+    }
+    .device-watt {
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      color: var(--text3);
+      min-width: 52px;
+      text-align: right;
+    }
+    .counter {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      background: var(--bg3);
+      border: 0.5px solid var(--border2);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .cbtn {
+      width: 32px;
+      height: 32px;
+      background: none;
+      border: none;
+      color: var(--text2);
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      -webkit-tap-highlight-color: transparent;
+      transition: background 0.1s;
+    }
+    .cbtn:active { background: var(--surface2); }
+    .cval {
+      font-family: 'DM Mono', monospace;
+      font-size: 15px;
+      font-weight: 500;
+      min-width: 24px;
+      text-align: center;
+      color: var(--text);
+    }
+    .cval.nonzero { color: var(--green); }
+
+    /* Settings panel */
+    .panel-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 200;
+      display: none;
+      align-items: flex-end;
+    }
+    .panel-overlay.open { display: flex; }
+    .panel {
+      width: 100%;
+      background: var(--surface);
+      border-radius: 20px 20px 0 0;
+      padding: 0 20px calc(env(safe-area-inset-bottom, 0) + 24px);
+      border-top: 0.5px solid var(--border2);
+    }
+    .panel-handle {
+      width: 36px;
+      height: 4px;
+      background: var(--border2);
+      border-radius: 2px;
+      margin: 12px auto 20px;
+    }
+    .panel-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 20px;
+    }
+    .panel-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 0;
+      border-bottom: 0.5px solid var(--border);
+    }
+    .panel-row:last-child { border-bottom: none; }
+    .panel-row-label { font-size: 14px; color: var(--text2); }
+    .panel-row input[type=time] {
+      background: var(--bg3);
+      border: 0.5px solid var(--border2);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      font-size: 15px;
+      padding: 6px 10px;
+    }
+    .panel-close {
+      width: 100%;
+      margin-top: 20px;
+      padding: 13px;
+      background: var(--bg3);
+      border: 0.5px solid var(--border2);
+      border-radius: 12px;
+      color: var(--text);
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: 'Sora', sans-serif;
+    }
+
+    /* Scroll bar */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <div class="logo">
+      <svg class="logo-icon" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="14" cy="14" r="13.5" stroke="#4dde8a" stroke-width="0.8" fill="none"/>
+        <path d="M14 6v3M14 19v3M6 14H3M25 14h-3M8.5 8.5l-2-2M21.5 21.5l-2-2M8.5 19.5l-2 2M21.5 6.5l-2 2" stroke="#4dde8a" stroke-width="1.2" stroke-linecap="round"/>
+        <circle cx="14" cy="14" r="4.5" fill="#4dde8a" fill-opacity="0.15" stroke="#4dde8a" stroke-width="1.2"/>
+        <path d="M12 14.5l1.5 1.5L17 11" stroke="#4dde8a" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span class="logo-text">PV Monitor</span>
+    </div>
+    <div class="header-right">
+      <button class="settings-btn" onclick="openPanel()" aria-label="Paramètres">⚙</button>
+    </div>
+  </div>
+</header>
+
+<main class="main">
+
+  <!-- Batterie -->
+  <div class="battery-block" id="batt-block">
+    <div class="batt-top">
+      <div>
+        <div class="batt-pct" id="batt-pct-disp">65%</div>
+        <div class="batt-pill pill-good" id="batt-pill">Bon niveau</div>
+      </div>
+      <div class="batt-meta">
+        <div class="batt-kwh" id="batt-kwh">6 500</div>
+        <div class="batt-kwh-label">Wh disponibles</div>
+      </div>
+    </div>
+    <div class="track-bg"><div class="track-fill" id="track-fill" style="width:65%"></div></div>
+    <input type="range" min="0" max="100" value="65" step="1" id="batt-range"
+      oninput="updateBatt(this.value)" aria-label="Niveau de batterie">
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">⚡ Charge totale</div>
+      <div class="stat-val" id="stat-load">0 <span class="stat-unit">W</span></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">⏱ Autonomie</div>
+      <div class="stat-val" id="stat-auto">—</div>
+    </div>
+  </div>
+
+  <!-- Sunrise -->
+  <div class="sunrise-card">
+    <div class="sunrise-icon">🌅</div>
+    <div class="sunrise-info">
+      <div class="sunrise-title">Relais solaire estimé</div>
+      <div class="sunrise-val" id="sunrise-msg">—</div>
+    </div>
+  </div>
+
+  <!-- Appareils -->
+  <div class="section-label">Appareils</div>
+  <div id="device-list"></div>
+
+</main>
+
+<!-- Settings panel -->
+<div class="panel-overlay" id="panel" onclick="closeIfOverlay(event)">
+  <div class="panel">
+    <div class="panel-handle"></div>
+    <div class="panel-title">Paramètres</div>
+    <div class="panel-row">
+      <span class="panel-row-label">Lever du soleil</span>
+      <input type="time" id="sunrise-input" value="06:00" oninput="saveSunrise(this.value)">
+    </div>
+    <div class="panel-row">
+      <span class="panel-row-label">Capacité batterie</span>
+      <span style="font-family:'DM Mono',monospace; font-size:14px; color:var(--text);">10 000 Wh</span>
+    </div>
+    <button class="panel-close" onclick="closePanel()">Fermer</button>
+  </div>
+</div>
+
+<script>
+const BATT_CAPACITY = 10000;
+const SUNRISE_KEY = 'pv_sunrise';
+
+const devices = [
+  { group: 'Éclairage', name: 'Lampe A', w: 10, max: 5, qty: 5 },
+  { group: 'Éclairage', name: 'Lampe B', w: 15, max: 10, qty: 0 },
+  { group: 'Éclairage', name: 'Lampe C', w: 20, max: 4, qty: 0 },
+  { group: 'Éclairage', name: 'Lampe D', w: 30, max: 6, qty: 0 },
+  { group: 'Informatique', name: 'Inverseur PHV', w: 97, max: 1, qty: 1 },
+  { group: 'Informatique', name: 'Starlink', w: 75, max: 1, qty: 1 },
+  { group: 'Informatique', name: 'Ordinateur portable', w: 75, max: 2, qty: 0 },
+  { group: 'Divertissement', name: 'Console PS5', w: 105, max: 1, qty: 0 },
+  { group: 'Divertissement', name: 'Écran salon', w: 125, max: 3, qty: 0 },
+  { group: 'Divertissement', name: 'Receveur Canal+', w: 10, max: 1, qty: 1 },
+  { group: 'Électroménager', name: 'Ventilateur', w: 50, max: 7, qty: 2 },
+  { group: 'Électroménager', name: 'Machine à laver', w: 710, max: 1, qty: 0 },
+  { group: 'Électroménager', name: 'Frigo XXL', w: 250, max: 1, qty: 0 },
+  { group: 'Électroménager', name: 'Congélateur', w: 140, max: 1, qty: 1 },
+  { group: 'Climatisation', name: 'Clim à eau', w: 140, max: 3, qty: 1 },
+  { group: 'Climatisation', name: 'Clim split 1,5 ch', w: 1104, max: 1, qty: 0 },
+  { group: 'Climatisation', name: 'Clim split 1 ch', w: 736, max: 1, qty: 0 },
+  { group: 'Autre', name: 'Surpresseur', w: 450, max: 1, qty: 0 },
+];
+
+let battPct = 65;
+let sunriseTime = localStorage.getItem(SUNRISE_KEY) || '06:00';
+
+function formatHours(h) {
+  if (!isFinite(h) || h <= 0) return '—';
+  const hrs = Math.floor(h);
+  const mins = Math.round((h - hrs) * 60);
+  if (hrs === 0) return mins + ' min';
+  if (mins === 0) return hrs + 'h';
+  return hrs + 'h ' + mins + 'min';
+}
+
+function calcSunrise(autoH) {
+  if (!isFinite(autoH) || autoH <= 0) return { msg: '—', ok: null };
+  const [sh, sm] = sunriseTime.split(':').map(Number);
+  const now = new Date();
+  const nowMins = now.getHours() * 60 + now.getMinutes();
+  const sunriseMins = sh * 60 + sm;
+  let diffMins = sunriseMins - nowMins;
+  if (diffMins < 0) diffMins += 1440;
+  const autoMins = autoH * 60;
+  if (autoMins >= diffMins) {
+    return { msg: 'Batterie tient jusqu\'au lever ✓', ok: true };
+  } else {
+    const depletedAt = nowMins + autoMins;
+    const dH = Math.floor(depletedAt / 60) % 24;
+    const dM = Math.round(depletedAt % 60);
+    return { msg: 'Épuisée vers ' + String(dH).padStart(2,'0') + ':' + String(dM).padStart(2,'0'), ok: false };
+  }
+}
+
+function getColor(pct) {
+  if (pct > 50) return 'var(--green)';
+  if (pct > 20) return 'var(--amber)';
+  return 'var(--red)';
+}
+
+function updateBatt(val) {
+  battPct = parseInt(val);
+  const color = getColor(battPct);
+  const avail = Math.round(BATT_CAPACITY * battPct / 100);
+
+  document.getElementById('batt-pct-disp').textContent = battPct + '%';
+  document.getElementById('batt-pct-disp').style.color = color;
+  document.getElementById('track-fill').style.width = battPct + '%';
+  document.getElementById('track-fill').style.background = color;
+  document.getElementById('batt-block').style.setProperty('--bar-color', color);
+  document.getElementById('batt-kwh').textContent = avail.toLocaleString('fr-FR');
+
+  const pill = document.getElementById('batt-pill');
+  if (battPct > 50) { pill.textContent = 'Bon niveau'; pill.className = 'batt-pill pill-good'; }
+  else if (battPct > 20) { pill.textContent = 'Niveau moyen'; pill.className = 'batt-pill pill-mid'; }
+  else { pill.textContent = 'Niveau critique'; pill.className = 'batt-pill pill-low'; }
+
+  updateStats();
+}
+
+function updateStats() {
+  let total = 0;
+  devices.forEach(d => { total += d.w * d.qty; });
+  const avail = BATT_CAPACITY * battPct / 100;
+  const autoH = total > 0 ? avail / total : Infinity;
+
+  document.getElementById('stat-load').innerHTML = total.toLocaleString('fr-FR') + ' <span class="stat-unit">W</span>';
+  document.getElementById('stat-auto').textContent = total > 0 ? formatHours(autoH) : '—';
+
+  const sr = calcSunrise(autoH);
+  const srEl = document.getElementById('sunrise-msg');
+  srEl.textContent = sr.msg;
+  srEl.className = 'sunrise-val' + (sr.ok === true ? ' ok' : sr.ok === false ? ' warn' : '');
+}
+
+function changeQty(i, delta) {
+  devices[i].qty = Math.max(0, Math.min(devices[i].max, devices[i].qty + delta));
+  const valEl = document.getElementById('qty-' + i);
+  valEl.textContent = devices[i].qty;
+  valEl.className = 'cval' + (devices[i].qty > 0 ? ' nonzero' : '');
+  const row = document.getElementById('row-' + i);
+  row.className = 'device-row' + (devices[i].qty > 0 ? ' active' : '');
+  updateStats();
+}
+
+function renderDevices() {
+  const list = document.getElementById('device-list');
+  let lastGroup = '';
+  let html = '';
+  let blockOpen = false;
+
+  devices.forEach((d, i) => {
+    if (d.group !== lastGroup) {
+      if (blockOpen) html += '</div>';
+      html += '<div class="device-block"><div class="group-header"><span class="group-label">' + d.group + '</span></div>';
+      blockOpen = true;
+      lastGroup = d.group;
+    }
+    html += `<div class="device-row${d.qty > 0 ? ' active' : ''}" id="row-${i}">
+      <span class="device-name">${d.name}</span>
+      <span class="device-watt">${d.w} W</span>
+      <div class="counter">
+        <button class="cbtn" onclick="changeQty(${i},-1)" aria-label="Diminuer">−</button>
+        <span class="cval${d.qty > 0 ? ' nonzero' : ''}" id="qty-${i}">${d.qty}</span>
+        <button class="cbtn" onclick="changeQty(${i},1)" aria-label="Augmenter">+</button>
+      </div>
+    </div>`;
+  });
+  if (blockOpen) html += '</div>';
+  list.innerHTML = html;
+}
+
+function openPanel() {
+  document.getElementById('panel').classList.add('open');
+  document.getElementById('sunrise-input').value = sunriseTime;
+}
+function closePanel() { document.getElementById('panel').classList.remove('open'); }
+function closeIfOverlay(e) { if (e.target === document.getElementById('panel')) closePanel(); }
+
+function saveSunrise(val) {
+  sunriseTime = val;
+  localStorage.setItem(SUNRISE_KEY, val);
+  updateStats();
+}
+
+// Service Worker
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+
+// Init
+renderDevices();
+updateBatt(65);
+</script>
+</body>
+</html>

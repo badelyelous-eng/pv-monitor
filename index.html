@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" dir="ltr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -11,442 +11,121 @@
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icon-192.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Sora:wght@300;400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Sora:wght@300;400;600&family=Cairo:wght@400;600&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --bg: #0f1a14;
-      --bg2: #162110;
-      --bg3: #1e2d1a;
-      --surface: #1a2b1f;
-      --surface2: #223328;
-      --border: rgba(255,255,255,0.07);
-      --border2: rgba(255,255,255,0.12);
-      --text: #e8f0e4;
-      --text2: #8aab8a;
-      --text3: #5a7a5a;
-      --green: #4dde8a;
-      --green-dim: #2a6645;
-      --amber: #f0b429;
-      --amber-dim: #7a5510;
-      --red: #f05050;
-      --red-dim: #7a2020;
-      --accent: #4dde8a;
+      --bg: #0f1a14; --bg2: #162110; --bg3: #1e2d1a;
+      --surface: #1a2b1f; --surface2: #223328;
+      --border: rgba(255,255,255,0.07); --border2: rgba(255,255,255,0.12);
+      --text: #e8f0e4; --text2: #8aab8a; --text3: #5a7a5a;
+      --green: #4dde8a; --amber: #f0b429; --red: #f05050;
     }
+    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Sora', sans-serif; font-size: 16px; -webkit-font-smoothing: antialiased; overscroll-behavior: none; }
+    body { display: flex; flex-direction: column; min-height: 100vh; min-height: -webkit-fill-available; }
+    body.ar { font-family: 'Cairo', sans-serif; }
 
-    html, body {
-      height: 100%;
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'Sora', sans-serif;
-      font-size: 16px;
-      -webkit-font-smoothing: antialiased;
-      overscroll-behavior: none;
-    }
+    .header { position: sticky; top: 0; z-index: 100; background: var(--bg); border-bottom: 0.5px solid var(--border); padding: env(safe-area-inset-top, 0) 20px 0; }
+    .header-inner { display: flex; align-items: center; justify-content: space-between; height: 56px; }
+    .logo { display: flex; align-items: center; gap: 8px; }
+    .logo-icon { width: 28px; height: 28px; }
+    .logo-text { font-size: 15px; font-weight: 600; color: var(--text); }
+    .settings-btn { background: none; border: 0.5px solid var(--border2); border-radius: 8px; color: var(--text2); font-size: 18px; width: 36px; height: 36px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 
-    body {
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-      min-height: -webkit-fill-available;
-    }
-
-    /* Header */
-    .header {
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      background: var(--bg);
-      border-bottom: 0.5px solid var(--border);
-      padding: env(safe-area-inset-top, 0) 20px 0;
-    }
-    .header-inner {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      height: 56px;
-    }
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .logo-icon {
-      width: 28px;
-      height: 28px;
-    }
-    .logo-text {
-      font-size: 15px;
-      font-weight: 600;
-      letter-spacing: 0.02em;
-      color: var(--text);
-    }
-    .header-right {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .settings-btn {
-      background: none;
-      border: 0.5px solid var(--border2);
-      border-radius: 8px;
-      color: var(--text2);
-      font-size: 18px;
-      width: 36px;
-      height: 36px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    /* Main scroll area */
     .main { flex: 1; overflow-y: auto; padding: 16px 16px calc(env(safe-area-inset-bottom, 0) + 16px); }
 
-    /* Battery section */
-    .battery-block {
-      background: var(--surface);
-      border: 0.5px solid var(--border);
-      border-radius: 16px;
-      padding: 18px 20px;
-      margin-bottom: 14px;
-      position: relative;
-      overflow: hidden;
-    }
-    .battery-block::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 2px;
-      background: var(--bar-color, var(--green));
-      transition: background 0.4s;
-    }
-    .batt-top {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      margin-bottom: 14px;
-    }
-    .batt-pct {
-      font-family: 'DM Mono', monospace;
-      font-size: 48px;
-      font-weight: 500;
-      line-height: 1;
-      color: var(--bar-color, var(--green));
-      transition: color 0.4s;
-    }
-    .batt-meta {
-      text-align: right;
-    }
-    .batt-kwh {
-      font-family: 'DM Mono', monospace;
-      font-size: 18px;
-      font-weight: 500;
-      color: var(--text);
-    }
-    .batt-kwh-label {
-      font-size: 11px;
-      color: var(--text3);
-      margin-top: 2px;
-    }
-    .batt-pill {
-      display: inline-block;
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      padding: 3px 10px;
-      border-radius: 20px;
-      margin-top: 6px;
-      transition: background 0.4s, color 0.4s;
-    }
+    .battery-block { background: var(--surface); border: 0.5px solid var(--border); border-radius: 16px; padding: 18px 20px; margin-bottom: 14px; position: relative; overflow: hidden; }
+    .battery-block::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--bar-color, var(--green)); transition: background 0.4s; }
+    .batt-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 14px; }
+    .batt-pct { font-family: 'DM Mono', monospace; font-size: 48px; font-weight: 500; line-height: 1; color: var(--bar-color, var(--green)); transition: color 0.4s; }
+    .batt-meta { text-align: right; }
+    .batt-kwh { font-family: 'DM Mono', monospace; font-size: 18px; font-weight: 500; color: var(--text); }
+    .batt-kwh-label { font-size: 11px; color: var(--text3); margin-top: 2px; }
+    .batt-pill { display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; padding: 3px 10px; border-radius: 20px; margin-top: 6px; transition: background 0.4s, color 0.4s; }
     .pill-good { background: rgba(77,222,138,0.12); color: var(--green); }
     .pill-mid  { background: rgba(240,180,41,0.12); color: var(--amber); }
     .pill-low  { background: rgba(240,80,80,0.12); color: var(--red); }
+    .track-bg { height: 6px; background: var(--bg3); border-radius: 3px; overflow: hidden; margin-bottom: 12px; }
+    .track-fill { height: 100%; border-radius: 3px; background: var(--bar-color, var(--green)); transition: width 0.2s, background 0.4s; }
+    input[type=range] { -webkit-appearance: none; width: 100%; height: 36px; background: transparent; cursor: pointer; }
+    input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%; background: var(--bar-color, var(--green)); border: 3px solid var(--bg); box-shadow: 0 0 0 1px var(--bar-color, var(--green)); transition: background 0.4s; }
+    input[type=range]::-webkit-slider-runnable-track { height: 6px; background: var(--bg3); border-radius: 3px; }
 
-    /* Track */
-    .track-wrap { position: relative; margin-top: 4px; }
-    .track-bg {
-      height: 6px;
-      background: var(--bg3);
-      border-radius: 3px;
-      overflow: hidden;
-      margin-bottom: 12px;
-    }
-    .track-fill {
-      height: 100%;
-      border-radius: 3px;
-      background: var(--bar-color, var(--green));
-      transition: width 0.2s, background 0.4s;
-    }
-    input[type=range] {
-      -webkit-appearance: none;
-      width: 100%;
-      height: 36px;
-      background: transparent;
-      cursor: pointer;
-    }
-    input[type=range]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 22px;
-      height: 22px;
-      border-radius: 50%;
-      background: var(--bar-color, var(--green));
-      border: 3px solid var(--bg);
-      box-shadow: 0 0 0 1px var(--bar-color, var(--green));
-      transition: background 0.4s, box-shadow 0.4s;
-    }
-    input[type=range]::-webkit-slider-runnable-track {
-      height: 6px;
-      background: var(--bg3);
-      border-radius: 3px;
-    }
+    .stats-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+    .stat-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: 14px; padding: 14px 16px; }
+    .stat-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 6px; }
+    .stat-val { font-family: 'DM Mono', monospace; font-size: 22px; font-weight: 500; color: var(--text); line-height: 1.1; }
+    .stat-unit { font-size: 13px; color: var(--text2); font-weight: 400; }
 
-    /* Stats grid */
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
-      margin-bottom: 14px;
-    }
-    .stat-card {
-      background: var(--surface);
-      border: 0.5px solid var(--border);
-      border-radius: 14px;
-      padding: 14px 16px;
-    }
-    .stat-label {
-      font-size: 11px;
-      color: var(--text3);
-      text-transform: uppercase;
-      letter-spacing: 0.07em;
-      margin-bottom: 6px;
-    }
-    .stat-val {
-      font-family: 'DM Mono', monospace;
-      font-size: 22px;
-      font-weight: 500;
-      color: var(--text);
-      line-height: 1.1;
-    }
-    .stat-unit {
-      font-size: 13px;
-      color: var(--text2);
-      font-weight: 400;
-    }
-
-    /* Sunrise card */
-    .depletion-card {
-      background: var(--surface);
-      border: 0.5px solid var(--border);
-      border-radius: 16px;
-      padding: 18px 20px;
-      margin-bottom: 14px;
-      position: relative;
-      overflow: hidden;
-    }
-    .depletion-card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 2px;
-      background: var(--depletion-color, var(--text3));
-      transition: background 0.4s;
-    }
-    .depletion-top {
-      display: flex;
-      align-items: baseline;
-      justify-content: space-between;
-      margin-bottom: 10px;
-    }
-    .depletion-label {
-      font-size: 11px;
-      color: var(--text3);
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-    }
-    .depletion-time {
-      font-family: 'DM Mono', monospace;
-      font-size: 40px;
-      font-weight: 500;
-      color: var(--depletion-color, var(--text3));
-      line-height: 1;
-      transition: color 0.4s;
-    }
-    .depletion-bottom {
-      font-size: 13px;
-      font-weight: 600;
-      padding: 6px 10px;
-      border-radius: 8px;
-      display: inline-block;
-      transition: background 0.4s, color 0.4s;
-    }
-    .depletion-bottom.ok { background: rgba(77,222,138,0.1); color: var(--green); }
+    .depletion-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: 16px; padding: 18px 20px; margin-bottom: 14px; position: relative; overflow: hidden; }
+    .depletion-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--depletion-color, var(--text3)); transition: background 0.4s; }
+    .depletion-top { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 10px; }
+    .depletion-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; }
+    .depletion-time { font-family: 'DM Mono', monospace; font-size: 40px; font-weight: 500; color: var(--depletion-color, var(--text3)); line-height: 1; transition: color 0.4s; }
+    .depletion-bottom { font-size: 13px; font-weight: 600; padding: 6px 10px; border-radius: 8px; display: inline-block; transition: background 0.4s, color 0.4s; }
+    .depletion-bottom.ok   { background: rgba(77,222,138,0.1); color: var(--green); }
     .depletion-bottom.warn { background: rgba(240,80,80,0.1); color: var(--red); }
     .depletion-bottom.neutral { background: var(--bg3); color: var(--text3); }
 
-    /* Section label */
-    .section-label {
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.09em;
-      text-transform: uppercase;
-      color: var(--text3);
-      margin: 18px 0 8px 2px;
-    }
-
-    /* Device list */
-    .device-block {
-      background: var(--surface);
-      border: 0.5px solid var(--border);
-      border-radius: 16px;
-      overflow: hidden;
-      margin-bottom: 14px;
-    }
-    .group-header {
-      padding: 8px 18px;
-      background: var(--bg3);
-      border-bottom: 0.5px solid var(--border);
-    }
-    .group-label {
-      font-size: 10px;
-      font-weight: 600;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--text3);
-    }
-    .device-row {
-      display: flex;
-      align-items: center;
-      padding: 11px 18px;
-      border-bottom: 0.5px solid var(--border);
-      gap: 10px;
-      transition: background 0.15s;
-    }
+    .section-label { font-size: 11px; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; color: var(--text3); margin: 18px 0 8px 2px; }
+    .device-block { background: var(--surface); border: 0.5px solid var(--border); border-radius: 16px; overflow: hidden; margin-bottom: 14px; }
+    .group-header { padding: 8px 18px; background: var(--bg3); border-bottom: 0.5px solid var(--border); }
+    .group-label { font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text3); }
+    .device-row { display: flex; align-items: center; padding: 11px 18px; border-bottom: 0.5px solid var(--border); gap: 10px; }
     .device-row:last-child { border-bottom: none; }
     .device-row.active { background: rgba(77,222,138,0.04); }
-    .device-name {
-      flex: 1;
-      font-size: 14px;
-      color: var(--text);
-      font-weight: 400;
-    }
-    .device-watt {
-      font-family: 'DM Mono', monospace;
-      font-size: 12px;
-      color: var(--text3);
-      min-width: 52px;
-      text-align: right;
-    }
-    .counter {
-      display: flex;
-      align-items: center;
-      gap: 0;
-      background: var(--bg3);
-      border: 0.5px solid var(--border2);
-      border-radius: 10px;
-      overflow: hidden;
-    }
-    .cbtn {
-      width: 32px;
-      height: 32px;
-      background: none;
-      border: none;
-      color: var(--text2);
-      font-size: 18px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      -webkit-tap-highlight-color: transparent;
-      transition: background 0.1s;
-    }
+    .device-name { flex: 1; font-size: 14px; color: var(--text); }
+    .device-watt { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text3); min-width: 52px; text-align: right; }
+    .counter { display: flex; align-items: center; background: var(--bg3); border: 0.5px solid var(--border2); border-radius: 10px; overflow: hidden; }
+    .cbtn { width: 32px; height: 32px; background: none; border: none; color: var(--text2); font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; -webkit-tap-highlight-color: transparent; }
     .cbtn:active { background: var(--surface2); }
-    .cval {
-      font-family: 'DM Mono', monospace;
-      font-size: 15px;
-      font-weight: 500;
-      min-width: 24px;
-      text-align: center;
-      color: var(--text);
-    }
+    .cval { font-family: 'DM Mono', monospace; font-size: 15px; font-weight: 500; min-width: 24px; text-align: center; color: var(--text); }
     .cval.nonzero { color: var(--green); }
 
-    /* Settings panel */
-    .panel-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.6);
-      z-index: 200;
-      display: none;
-      align-items: flex-end;
-    }
-    .panel-overlay.open { display: flex; }
-    .panel {
-      width: 100%;
-      background: var(--surface);
-      border-radius: 20px 20px 0 0;
-      padding: 0 20px calc(env(safe-area-inset-bottom, 0) + 24px);
-      border-top: 0.5px solid var(--border2);
-    }
-    .panel-handle {
-      width: 36px;
-      height: 4px;
-      background: var(--border2);
-      border-radius: 2px;
-      margin: 12px auto 20px;
-    }
-    .panel-title {
-      font-size: 16px;
-      font-weight: 600;
-      color: var(--text);
-      margin-bottom: 20px;
-    }
-    .panel-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 14px 0;
-      border-bottom: 0.5px solid var(--border);
-    }
-    .panel-row:last-child { border-bottom: none; }
-    .panel-row-label { font-size: 14px; color: var(--text2); }
-    .panel-row input[type=time] {
-      background: var(--bg3);
-      border: 0.5px solid var(--border2);
-      border-radius: 8px;
-      color: var(--text);
-      font-family: 'DM Mono', monospace;
-      font-size: 15px;
-      padding: 6px 10px;
-    }
-    .panel-close {
-      width: 100%;
-      margin-top: 20px;
-      padding: 13px;
-      background: var(--bg3);
-      border: 0.5px solid var(--border2);
-      border-radius: 12px;
-      color: var(--text);
-      font-size: 15px;
-      font-weight: 600;
-      cursor: pointer;
-      font-family: 'Sora', sans-serif;
-    }
+    /* Add device button */
+    .add-device-btn { width: 100%; padding: 13px; background: transparent; border: 0.5px dashed var(--border2); border-radius: 12px; color: var(--text3); font-size: 14px; cursor: pointer; margin-bottom: 14px; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .add-device-btn:active { background: var(--surface); }
 
-    /* Scroll bar */
+    /* Panel overlay */
+    .panel-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 200; display: none; align-items: flex-end; }
+    .panel-overlay.open { display: flex; }
+    .panel { width: 100%; background: var(--surface); border-radius: 20px 20px 0 0; padding: 0 20px calc(env(safe-area-inset-bottom, 0) + 24px); border-top: 0.5px solid var(--border2); max-height: 90vh; overflow-y: auto; }
+    .panel-handle { width: 36px; height: 4px; background: var(--border2); border-radius: 2px; margin: 12px auto 20px; }
+    .panel-title { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 20px; }
+    .panel-row { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 0.5px solid var(--border); }
+    .panel-row:last-of-type { border-bottom: none; }
+    .panel-row-label { font-size: 14px; color: var(--text2); }
+    .panel-row input[type=time], .panel-row input[type=text], .panel-row input[type=number] { background: var(--bg3); border: 0.5px solid var(--border2); border-radius: 8px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 15px; padding: 6px 10px; width: 130px; }
+    .panel-row input[type=text] { font-family: inherit; width: 150px; }
+    .lang-toggle { display: flex; gap: 6px; }
+    .lang-btn { padding: 6px 14px; border-radius: 8px; border: 0.5px solid var(--border2); background: transparent; color: var(--text2); font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; }
+    .lang-btn.active { background: var(--green); color: var(--bg); border-color: var(--green); }
+    .panel-close { width: 100%; margin-top: 20px; padding: 13px; background: var(--bg3); border: 0.5px solid var(--border2); border-radius: 12px; color: var(--text); font-size: 15px; font-weight: 600; cursor: pointer; font-family: inherit; }
+    .panel-section { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text3); margin: 20px 0 4px; }
+
+    /* Device form */
+    .device-form { background: var(--bg3); border-radius: 12px; padding: 14px; margin-bottom: 14px; }
+    .device-form input { width: 100%; background: var(--surface); border: 0.5px solid var(--border2); border-radius: 8px; color: var(--text); font-family: inherit; font-size: 14px; padding: 10px 12px; margin-bottom: 10px; }
+    .device-form-row { display: flex; gap: 8px; }
+    .device-form-row input { margin-bottom: 0; }
+    .form-btns { display: flex; gap: 8px; margin-top: 10px; }
+    .btn-save { flex: 1; padding: 10px; background: var(--green); color: var(--bg); border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; }
+    .btn-cancel { flex: 1; padding: 10px; background: transparent; color: var(--text2); border: 0.5px solid var(--border2); border-radius: 8px; font-size: 14px; cursor: pointer; font-family: inherit; }
+    .btn-delete { padding: 10px 14px; background: rgba(240,80,80,0.1); color: var(--red); border: 0.5px solid rgba(240,80,80,0.2); border-radius: 8px; font-size: 14px; cursor: pointer; font-family: inherit; }
+
+    /* Device edit icon */
+    .device-edit { width: 28px; height: 28px; background: none; border: none; color: var(--text3); font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
     ::-webkit-scrollbar { width: 4px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
   </style>
 </head>
 <body>
-
 <header class="header">
   <div class="header-inner">
     <div class="logo">
-      <svg class="logo-icon" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <svg class="logo-icon" viewBox="0 0 28 28" fill="none">
         <circle cx="14" cy="14" r="13.5" stroke="#4dde8a" stroke-width="0.8" fill="none"/>
         <path d="M14 6v3M14 19v3M6 14H3M25 14h-3M8.5 8.5l-2-2M21.5 21.5l-2-2M8.5 19.5l-2 2M21.5 6.5l-2 2" stroke="#4dde8a" stroke-width="1.2" stroke-linecap="round"/>
         <circle cx="14" cy="14" r="4.5" fill="#4dde8a" fill-opacity="0.15" stroke="#4dde8a" stroke-width="1.2"/>
@@ -454,80 +133,149 @@
       </svg>
       <span class="logo-text">PV Monitor</span>
     </div>
-    <div class="header-right">
-      <button class="settings-btn" onclick="openPanel()" aria-label="Paramètres">⚙</button>
-    </div>
+    <button class="settings-btn" onclick="openPanel()" aria-label="Paramètres">⚙</button>
   </div>
 </header>
 
 <main class="main">
-
-  <!-- Batterie -->
   <div class="battery-block" id="batt-block">
     <div class="batt-top">
       <div>
         <div class="batt-pct" id="batt-pct-disp">65%</div>
-        <div class="batt-pill pill-good" id="batt-pill">Bon niveau</div>
+        <div class="batt-pill pill-good" id="batt-pill">—</div>
       </div>
       <div class="batt-meta">
         <div class="batt-kwh" id="batt-kwh">6 500</div>
-        <div class="batt-kwh-label">Wh disponibles</div>
+        <div class="batt-kwh-label" id="lbl-wh-avail">Wh disponibles</div>
       </div>
     </div>
     <div class="track-bg"><div class="track-fill" id="track-fill" style="width:65%"></div></div>
-    <input type="range" min="0" max="100" value="65" step="1" id="batt-range"
-      oninput="updateBatt(this.value)" aria-label="Niveau de batterie">
+    <input type="range" min="0" max="100" value="65" step="1" id="batt-range" oninput="updateBatt(this.value)">
   </div>
 
-  <!-- Stats -->
   <div class="stats-grid">
     <div class="stat-card">
-      <div class="stat-label">⚡ Charge totale</div>
+      <div class="stat-label" id="lbl-load">⚡ Charge totale</div>
       <div class="stat-val" id="stat-load">0 <span class="stat-unit">W</span></div>
     </div>
     <div class="stat-card">
-      <div class="stat-label">⏱ Autonomie</div>
+      <div class="stat-label" id="lbl-auto">⏱ Autonomie</div>
       <div class="stat-val" id="stat-auto">—</div>
     </div>
   </div>
 
-  <!-- Épuisement + Sunrise -->
   <div class="depletion-card" id="depletion-card">
     <div class="depletion-top">
-      <div class="depletion-label">Batterie épuisée à</div>
+      <div class="depletion-label" id="lbl-depleted-at">Batterie épuisée à</div>
       <div class="depletion-time" id="depletion-time">—</div>
     </div>
-    <div class="depletion-bottom" id="sunrise-msg">—</div>
+    <div class="depletion-bottom neutral" id="sunrise-msg">—</div>
   </div>
 
-  <!-- Appareils -->
-  <div class="section-label">Appareils</div>
+  <div class="section-label" id="lbl-devices">Appareils</div>
   <div id="device-list"></div>
-
+  <div id="device-form-container"></div>
+  <button class="add-device-btn" onclick="showAddForm()" id="add-device-btn">＋ <span id="lbl-add-device">Ajouter un appareil</span></button>
 </main>
 
 <!-- Settings panel -->
 <div class="panel-overlay" id="panel" onclick="closeIfOverlay(event)">
   <div class="panel">
     <div class="panel-handle"></div>
-    <div class="panel-title">Paramètres</div>
+    <div class="panel-title" id="lbl-settings">Paramètres</div>
+
+    <div class="panel-section" id="lbl-section-general">Général</div>
     <div class="panel-row">
-      <span class="panel-row-label">Lever du soleil</span>
+      <span class="panel-row-label" id="lbl-sunrise-param">Lever du soleil</span>
       <input type="time" id="sunrise-input" value="06:00" oninput="saveSunrise(this.value)">
     </div>
     <div class="panel-row">
-      <span class="panel-row-label">Capacité batterie</span>
+      <span class="panel-row-label" id="lbl-capacity-param">Capacité batterie</span>
       <span style="font-family:'DM Mono',monospace; font-size:14px; color:var(--text);">10 000 Wh</span>
     </div>
-    <button class="panel-close" onclick="closePanel()">Fermer</button>
+
+    <div class="panel-section" id="lbl-section-lang">Langue / Language</div>
+    <div class="panel-row">
+      <span class="panel-row-label">Français / العربية</span>
+      <div class="lang-toggle">
+        <button class="lang-btn active" id="btn-lang-fr" onclick="setLang('fr')">FR</button>
+        <button class="lang-btn" id="btn-lang-ar" onclick="setLang('ar')">AR</button>
+      </div>
+    </div>
+
+    <button class="panel-close" onclick="closePanel()" id="lbl-close">Fermer</button>
   </div>
 </div>
 
 <script>
 const BATT_CAPACITY = 10000;
 const SUNRISE_KEY = 'pv_sunrise';
+const STATE_KEY = 'pv_state';
+const LANG_KEY = 'pv_lang';
+const DEVICES_KEY = 'pv_devices';
 
-const devices = [
+const T = {
+  fr: {
+    wh_avail: 'Wh disponibles',
+    load: '⚡ Charge totale',
+    auto: '⏱ Autonomie',
+    depleted_at: 'Batterie épuisée à',
+    devices: 'Appareils',
+    add_device: 'Ajouter un appareil',
+    settings: 'Paramètres',
+    section_general: 'Général',
+    sunrise_param: 'Lever du soleil',
+    capacity_param: 'Capacité batterie',
+    section_lang: 'Langue / Language',
+    close: 'Fermer',
+    good: 'Bon niveau',
+    mid: 'Niveau moyen',
+    low: 'Niveau critique',
+    no_device: 'Aucun appareil actif',
+    ok_msg: '✓ Batterie tient jusqu\'au lever du soleil',
+    warn_msg: '✗ Épuisée avant le lever du soleil',
+    edit_title: 'Modifier l\'appareil',
+    add_title: 'Nouvel appareil',
+    name_ph: 'Nom de l\'appareil',
+    group_ph: 'Catégorie',
+    power_ph: 'Puissance (W)',
+    max_ph: 'Quantité max',
+    save: 'Enregistrer',
+    cancel: 'Annuler',
+    delete: 'Supprimer',
+  },
+  ar: {
+    wh_avail: 'وات/ساعة متاح',
+    load: '⚡ الحمل الكلي',
+    auto: '⏱ مدة الاستقلالية',
+    depleted_at: 'نفاد البطارية في',
+    devices: 'الأجهزة',
+    add_device: 'إضافة جهاز',
+    settings: 'الإعدادات',
+    section_general: 'عام',
+    sunrise_param: 'وقت شروق الشمس',
+    capacity_param: 'سعة البطارية',
+    section_lang: 'Langue / Language',
+    close: 'إغلاق',
+    good: 'مستوى جيد',
+    mid: 'مستوى متوسط',
+    low: 'مستوى حرج',
+    no_device: 'لا يوجد جهاز نشط',
+    ok_msg: '✓ البطارية تصمد حتى شروق الشمس',
+    warn_msg: '✗ ستنفد قبل شروق الشمس',
+    edit_title: 'تعديل الجهاز',
+    add_title: 'جهاز جديد',
+    name_ph: 'اسم الجهاز',
+    group_ph: 'الفئة',
+    power_ph: 'الاستهلاك (واط)',
+    max_ph: 'الكمية القصوى',
+    save: 'حفظ',
+    cancel: 'إلغاء',
+    delete: 'حذف',
+  }
+};
+
+const defaultDevices = [
   { group: 'Éclairage', name: 'Lampe A', w: 10, max: 5, qty: 5 },
   { group: 'Éclairage', name: 'Lampe B', w: 15, max: 10, qty: 0 },
   { group: 'Éclairage', name: 'Lampe C', w: 20, max: 4, qty: 0 },
@@ -548,10 +296,58 @@ const devices = [
   { group: 'Autre', name: 'Surpresseur', w: 450, max: 1, qty: 0 },
 ];
 
-const STATE_KEY = 'pv_state';
-
+let devices = [];
 let battPct = 65;
 let sunriseTime = localStorage.getItem(SUNRISE_KEY) || '06:00';
+let lang = localStorage.getItem(LANG_KEY) || 'fr';
+
+function t(key) { return T[lang][key] || T['fr'][key]; }
+
+function setLang(l) {
+  lang = l;
+  localStorage.setItem(LANG_KEY, l);
+  document.documentElement.lang = l;
+  document.documentElement.dir = l === 'ar' ? 'rtl' : 'ltr';
+  document.body.className = l === 'ar' ? 'ar' : '';
+  document.getElementById('btn-lang-fr').className = 'lang-btn' + (l === 'fr' ? ' active' : '');
+  document.getElementById('btn-lang-ar').className = 'lang-btn' + (l === 'ar' ? ' active' : '');
+  applyTranslations();
+  renderDevices();
+  updateBatt(battPct);
+}
+
+function applyTranslations() {
+  const ids = {
+    'lbl-wh-avail': 'wh_avail',
+    'lbl-load': 'load',
+    'lbl-auto': 'auto',
+    'lbl-depleted-at': 'depleted_at',
+    'lbl-devices': 'devices',
+    'lbl-add-device': 'add_device',
+    'lbl-settings': 'settings',
+    'lbl-section-general': 'section_general',
+    'lbl-sunrise-param': 'sunrise_param',
+    'lbl-capacity-param': 'capacity_param',
+    'lbl-section-lang': 'section_lang',
+    'lbl-close': 'close',
+  };
+  Object.entries(ids).forEach(([id, key]) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = t(key);
+  });
+}
+
+function saveDevices() {
+  localStorage.setItem(DEVICES_KEY, JSON.stringify(devices));
+}
+
+function loadDevices() {
+  try {
+    const raw = localStorage.getItem(DEVICES_KEY);
+    if (raw) { devices = JSON.parse(raw); return; }
+  } catch(e) {}
+  devices = defaultDevices.map(d => Object.assign({}, d));
+}
 
 function saveState() {
   const state = { battPct, qtys: devices.map(d => d.qty) };
@@ -563,13 +359,8 @@ function loadState() {
     const raw = localStorage.getItem(STATE_KEY);
     if (!raw) return;
     const state = JSON.parse(raw);
-    if (state.battPct !== undefined) {
-      battPct = state.battPct;
-      document.getElementById('batt-range').value = battPct;
-    }
-    if (Array.isArray(state.qtys)) {
-      state.qtys.forEach((q, i) => { if (devices[i]) devices[i].qty = q; });
-    }
+    if (state.battPct !== undefined) { battPct = state.battPct; document.getElementById('batt-range').value = battPct; }
+    if (Array.isArray(state.qtys)) { state.qtys.forEach((q, i) => { if (devices[i]) devices[i].qty = q; }); }
   } catch(e) {}
 }
 
@@ -591,21 +382,17 @@ function calcDepletion(autoH) {
   const dH = Math.floor(depletedMins / 60) % 24;
   const dM = depletedMins % 60;
   const timeStr = String(dH).padStart(2,'0') + ':' + String(dM).padStart(2,'0');
-
   const [sh, sm] = sunriseTime.split(':').map(Number);
   const sunriseMins = sh * 60 + sm;
   let diffMins = sunriseMins - nowMins;
   if (diffMins < 0) diffMins += 1440;
-
   let srMsg, srOk, color;
   if (autoMins >= diffMins) {
-    srMsg = '✓ Batterie tient jusqu\'au lever du soleil (' + sunriseTime + ')';
-    srOk = true;
-    color = 'var(--green)';
+    srMsg = t('ok_msg') + ' (' + sunriseTime + ')';
+    srOk = true; color = 'var(--green)';
   } else {
-    srMsg = '✗ Épuisée avant le lever du soleil (' + sunriseTime + ')';
-    srOk = false;
-    color = 'var(--red)';
+    srMsg = t('warn_msg') + ' (' + sunriseTime + ')';
+    srOk = false; color = 'var(--red)';
   }
   return { time: timeStr, srMsg, srOk, color };
 }
@@ -620,19 +407,16 @@ function updateBatt(val) {
   battPct = parseInt(val);
   const color = getColor(battPct);
   const avail = Math.round(BATT_CAPACITY * battPct / 100);
-
   document.getElementById('batt-pct-disp').textContent = battPct + '%';
   document.getElementById('batt-pct-disp').style.color = color;
   document.getElementById('track-fill').style.width = battPct + '%';
   document.getElementById('track-fill').style.background = color;
   document.getElementById('batt-block').style.setProperty('--bar-color', color);
   document.getElementById('batt-kwh').textContent = avail.toLocaleString('fr-FR');
-
   const pill = document.getElementById('batt-pill');
-  if (battPct > 50) { pill.textContent = 'Bon niveau'; pill.className = 'batt-pill pill-good'; }
-  else if (battPct > 20) { pill.textContent = 'Niveau moyen'; pill.className = 'batt-pill pill-mid'; }
-  else { pill.textContent = 'Niveau critique'; pill.className = 'batt-pill pill-low'; }
-
+  if (battPct > 50) { pill.textContent = t('good'); pill.className = 'batt-pill pill-good'; }
+  else if (battPct > 20) { pill.textContent = t('mid'); pill.className = 'batt-pill pill-mid'; }
+  else { pill.textContent = t('low'); pill.className = 'batt-pill pill-low'; }
   updateStats();
 }
 
@@ -641,18 +425,15 @@ function updateStats() {
   devices.forEach(d => { total += d.w * d.qty; });
   const avail = BATT_CAPACITY * battPct / 100;
   const autoH = total > 0 ? avail / total : Infinity;
-
   document.getElementById('stat-load').innerHTML = total.toLocaleString('fr-FR') + ' <span class="stat-unit">W</span>';
   document.getElementById('stat-auto').textContent = total > 0 ? formatHours(autoH) : '—';
-
   const card = document.getElementById('depletion-card');
   const timeEl = document.getElementById('depletion-time');
   const msgEl = document.getElementById('sunrise-msg');
-
   if (total === 0) {
     timeEl.textContent = '—';
     card.style.setProperty('--depletion-color', 'var(--text3)');
-    msgEl.textContent = 'Aucun appareil actif';
+    msgEl.textContent = t('no_device');
     msgEl.className = 'depletion-bottom neutral';
   } else {
     const d = calcDepletion(autoH);
@@ -666,34 +447,29 @@ function updateStats() {
 
 function changeQty(i, delta) {
   devices[i].qty = Math.max(0, Math.min(devices[i].max, devices[i].qty + delta));
-  const valEl = document.getElementById('qty-' + i);
-  valEl.textContent = devices[i].qty;
-  valEl.className = 'cval' + (devices[i].qty > 0 ? ' nonzero' : '');
-  const row = document.getElementById('row-' + i);
-  row.className = 'device-row' + (devices[i].qty > 0 ? ' active' : '');
+  document.getElementById('qty-' + i).textContent = devices[i].qty;
+  document.getElementById('qty-' + i).className = 'cval' + (devices[i].qty > 0 ? ' nonzero' : '');
+  document.getElementById('row-' + i).className = 'device-row' + (devices[i].qty > 0 ? ' active' : '');
   updateStats();
 }
 
 function renderDevices() {
   const list = document.getElementById('device-list');
-  let lastGroup = '';
-  let html = '';
-  let blockOpen = false;
-
+  let lastGroup = '', html = '', blockOpen = false;
   devices.forEach((d, i) => {
     if (d.group !== lastGroup) {
       if (blockOpen) html += '</div>';
       html += '<div class="device-block"><div class="group-header"><span class="group-label">' + d.group + '</span></div>';
-      blockOpen = true;
-      lastGroup = d.group;
+      blockOpen = true; lastGroup = d.group;
     }
     html += `<div class="device-row${d.qty > 0 ? ' active' : ''}" id="row-${i}">
+      <button class="device-edit" onclick="showEditForm(${i})" aria-label="Modifier">✎</button>
       <span class="device-name">${d.name}</span>
       <span class="device-watt">${d.w} W</span>
       <div class="counter">
-        <button class="cbtn" onclick="changeQty(${i},-1)" aria-label="Diminuer">−</button>
+        <button class="cbtn" onclick="changeQty(${i},-1)">−</button>
         <span class="cval${d.qty > 0 ? ' nonzero' : ''}" id="qty-${i}">${d.qty}</span>
-        <button class="cbtn" onclick="changeQty(${i},1)" aria-label="Augmenter">+</button>
+        <button class="cbtn" onclick="changeQty(${i},1)">+</button>
       </div>
     </div>`;
   });
@@ -701,28 +477,86 @@ function renderDevices() {
   list.innerHTML = html;
 }
 
-function openPanel() {
-  document.getElementById('panel').classList.add('open');
-  document.getElementById('sunrise-input').value = sunriseTime;
+function showAddForm() {
+  const c = document.getElementById('device-form-container');
+  c.innerHTML = `<div class="device-form">
+    <div style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:12px;">${t('add_title')}</div>
+    <input type="text" id="f-name" placeholder="${t('name_ph')}">
+    <input type="text" id="f-group" placeholder="${t('group_ph')}">
+    <div class="device-form-row">
+      <input type="number" id="f-power" placeholder="${t('power_ph')}" min="1">
+      <input type="number" id="f-max" placeholder="${t('max_ph')}" min="1" value="1">
+    </div>
+    <div class="form-btns">
+      <button class="btn-cancel" onclick="hideForm()">${t('cancel')}</button>
+      <button class="btn-save" onclick="saveNewDevice()">${t('save')}</button>
+    </div>
+  </div>`;
+  c.scrollIntoView({ behavior: 'smooth' });
 }
+
+function showEditForm(i) {
+  const d = devices[i];
+  const c = document.getElementById('device-form-container');
+  c.innerHTML = `<div class="device-form">
+    <div style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:12px;">${t('edit_title')}</div>
+    <input type="text" id="f-name" placeholder="${t('name_ph')}" value="${d.name}">
+    <input type="text" id="f-group" placeholder="${t('group_ph')}" value="${d.group}">
+    <div class="device-form-row">
+      <input type="number" id="f-power" placeholder="${t('power_ph')}" value="${d.w}" min="1">
+      <input type="number" id="f-max" placeholder="${t('max_ph')}" value="${d.max}" min="1">
+    </div>
+    <div class="form-btns">
+      <button class="btn-delete" onclick="deleteDevice(${i})">${t('delete')}</button>
+      <button class="btn-cancel" onclick="hideForm()">${t('cancel')}</button>
+      <button class="btn-save" onclick="saveEditDevice(${i})">${t('save')}</button>
+    </div>
+  </div>`;
+  c.scrollIntoView({ behavior: 'smooth' });
+}
+
+function saveNewDevice() {
+  const name = document.getElementById('f-name').value.trim();
+  const group = document.getElementById('f-group').value.trim();
+  const w = parseInt(document.getElementById('f-power').value);
+  const max = parseInt(document.getElementById('f-max').value) || 1;
+  if (!name || !group || !w) return;
+  devices.push({ group, name, w, max, qty: 0 });
+  saveDevices(); hideForm(); renderDevices(); updateStats();
+}
+
+function saveEditDevice(i) {
+  const name = document.getElementById('f-name').value.trim();
+  const group = document.getElementById('f-group').value.trim();
+  const w = parseInt(document.getElementById('f-power').value);
+  const max = parseInt(document.getElementById('f-max').value) || 1;
+  if (!name || !group || !w) return;
+  devices[i] = { ...devices[i], name, group, w, max };
+  saveDevices(); hideForm(); renderDevices(); updateStats();
+}
+
+function deleteDevice(i) {
+  devices.splice(i, 1);
+  saveDevices(); hideForm(); renderDevices(); updateStats();
+}
+
+function hideForm() {
+  document.getElementById('device-form-container').innerHTML = '';
+}
+
+function openPanel() { document.getElementById('panel').classList.add('open'); document.getElementById('sunrise-input').value = sunriseTime; }
 function closePanel() { document.getElementById('panel').classList.remove('open'); }
 function closeIfOverlay(e) { if (e.target === document.getElementById('panel')) closePanel(); }
+function saveSunrise(val) { sunriseTime = val; localStorage.setItem(SUNRISE_KEY, val); updateStats(); }
 
-function saveSunrise(val) {
-  sunriseTime = val;
-  localStorage.setItem(SUNRISE_KEY, val);
-  updateStats();
-}
-
-// Service Worker
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js').catch(() => {});
-  });
+  window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
 }
 
 // Init
+loadDevices();
 loadState();
+setLang(lang);
 renderDevices();
 updateBatt(battPct);
 </script>

@@ -335,24 +335,24 @@ const T = {
 };
 
 const defaultDevices = [
-  { group: 'Éclairage', name: 'Lampe A', w: 10, max: 5, qty: 5 },
-  { group: 'Éclairage', name: 'Lampe B', w: 15, max: 10, qty: 0 },
-  { group: 'Éclairage', name: 'Lampe C', w: 20, max: 4, qty: 0 },
-  { group: 'Éclairage', name: 'Lampe D', w: 30, max: 6, qty: 0 },
-  { group: 'Informatique', name: 'Inverseur PHV', w: 97, max: 1, qty: 1 },
-  { group: 'Informatique', name: 'Starlink', w: 75, max: 1, qty: 1 },
-  { group: 'Informatique', name: 'Ordinateur portable', w: 75, max: 2, qty: 0 },
-  { group: 'Divertissement', name: 'Console PS5', w: 105, max: 1, qty: 0 },
-  { group: 'Divertissement', name: 'Écran salon', w: 125, max: 3, qty: 0 },
-  { group: 'Divertissement', name: 'Receveur Canal+', w: 10, max: 1, qty: 1 },
-  { group: 'Électroménager', name: 'Ventilateur', w: 50, max: 7, qty: 2 },
-  { group: 'Électroménager', name: 'Machine à laver', w: 710, max: 1, qty: 0 },
-  { group: 'Électroménager', name: 'Frigo XXL', w: 250, max: 1, qty: 0 },
-  { group: 'Électroménager', name: 'Congélateur', w: 140, max: 1, qty: 1 },
-  { group: 'Climatisation', name: 'Clim à eau', w: 140, max: 3, qty: 1 },
-  { group: 'Climatisation', name: 'Clim split 1,5 ch', w: 1104, max: 1, qty: 0 },
-  { group: 'Climatisation', name: 'Clim split 1 ch', w: 736, max: 1, qty: 0 },
-  { group: 'Autre', name: 'Surpresseur', w: 450, max: 1, qty: 0 },
+  { group: 'Éclairage', group_ar: 'إضاءة', name: 'Lampe A', name_ar: 'مصباح أ', w: 10, max: 5, qty: 5 },
+  { group: 'Éclairage', group_ar: 'إضاءة', name: 'Lampe B', name_ar: 'مصباح ب', w: 15, max: 10, qty: 0 },
+  { group: 'Éclairage', group_ar: 'إضاءة', name: 'Lampe C', name_ar: 'مصباح ج', w: 20, max: 4, qty: 0 },
+  { group: 'Éclairage', group_ar: 'إضاءة', name: 'Lampe D', name_ar: 'مصباح د', w: 30, max: 6, qty: 0 },
+  { group: 'Informatique', group_ar: 'معلوماتية', name: 'Inverseur PHV', name_ar: 'محول PHV', w: 97, max: 1, qty: 1 },
+  { group: 'Informatique', group_ar: 'معلوماتية', name: 'Starlink', name_ar: 'ستارلينك', w: 75, max: 1, qty: 1 },
+  { group: 'Informatique', group_ar: 'معلوماتية', name: 'Ordinateur portable', name_ar: 'حاسوب محمول', w: 75, max: 2, qty: 0 },
+  { group: 'Divertissement', group_ar: 'ترفيه', name: 'Console PS5', name_ar: 'بلايستيشن 5', w: 105, max: 1, qty: 0 },
+  { group: 'Divertissement', group_ar: 'ترفيه', name: 'Écran salon', name_ar: 'شاشة الصالون', w: 125, max: 3, qty: 0 },
+  { group: 'Divertissement', group_ar: 'ترفيه', name: 'Receveur Canal+', name_ar: 'جهاز كانال+', w: 10, max: 1, qty: 1 },
+  { group: 'Électroménager', group_ar: 'أجهزة منزلية', name: 'Ventilateur', name_ar: 'مروحة', w: 50, max: 7, qty: 2 },
+  { group: 'Électroménager', group_ar: 'أجهزة منزلية', name: 'Machine à laver', name_ar: 'غسالة', w: 710, max: 1, qty: 0 },
+  { group: 'Électroménager', group_ar: 'أجهزة منزلية', name: 'Frigo XXL', name_ar: 'ثلاجة كبيرة', w: 250, max: 1, qty: 0 },
+  { group: 'Électroménager', group_ar: 'أجهزة منزلية', name: 'Congélateur', name_ar: 'مجمّدة', w: 140, max: 1, qty: 1 },
+  { group: 'Climatisation', group_ar: 'تكييف', name: 'Clim à eau', name_ar: 'مكيف مائي', w: 140, max: 3, qty: 1 },
+  { group: 'Climatisation', group_ar: 'تكييف', name: 'Clim split 1,5 ch', name_ar: 'سبليت 1.5 حصان', w: 1104, max: 1, qty: 0 },
+  { group: 'Climatisation', group_ar: 'تكييف', name: 'Clim split 1 ch', name_ar: 'سبليت 1 حصان', w: 736, max: 1, qty: 0 },
+  { group: 'Autre', group_ar: 'أخرى', name: 'Surpresseur', name_ar: 'مضخة ضغط', w: 450, max: 1, qty: 0 },
 ];
 
 let devices = [];
@@ -514,18 +514,23 @@ function changeQty(i, delta) {
   updateStats();
 }
 
+function dName(d) { return (lang === 'ar' && d.name_ar) ? d.name_ar : d.name; }
+function dGroup(d) { return (lang === 'ar' && d.group_ar) ? d.group_ar : d.group; }
+function dGroupKey(d) { return d.group; } // clé stable pour regroupement
+
 function renderDevices() {
   const list = document.getElementById('device-list');
-  let lastGroup = '', html = '', blockOpen = false;
+  let lastGroupKey = '', html = '', blockOpen = false;
   devices.forEach((d, i) => {
-    if (d.group !== lastGroup) {
+    const groupKey = dGroupKey(d);
+    if (groupKey !== lastGroupKey) {
       if (blockOpen) html += '</div>';
-      html += '<div class="device-block"><div class="group-header"><div class="group-dot"></div><span class="group-label">' + d.group + '</span></div>';
-      blockOpen = true; lastGroup = d.group;
+      html += '<div class="device-block"><div class="group-header"><div class="group-dot"></div><span class="group-label">' + dGroup(d) + '</span></div>';
+      blockOpen = true; lastGroupKey = groupKey;
     }
     html += `<div class="device-row${d.qty > 0 ? ' active' : ''}" id="row-${i}">
       <button class="device-edit" onclick="showEditForm(${i})">✎</button>
-      <span class="device-name">${d.name}</span>
+      <span class="device-name">${dName(d)}</span>
       <span class="device-watt">${d.w} W</span>
       <div class="counter">
         <button class="cbtn" onclick="changeQty(${i},-1)">−</button>
@@ -542,8 +547,10 @@ function showAddForm() {
   const c = document.getElementById('device-form-container');
   c.innerHTML = `<div class="device-form">
     <div class="form-title">${t('add_title')}</div>
-    <input type="text" id="f-name" placeholder="${t('name_ph')}">
-    <input type="text" id="f-group" placeholder="${t('group_ph')}">
+    <input type="text" id="f-name" placeholder="${t('name_ph')} (FR)">
+    <input type="text" id="f-name-ar" placeholder="${t('name_ph')} (AR — اختياري)" dir="auto">
+    <input type="text" id="f-group" placeholder="${t('group_ph')} (FR)">
+    <input type="text" id="f-group-ar" placeholder="${t('group_ph')} (AR — اختياري)" dir="auto">
     <div class="device-form-row">
       <input type="number" id="f-power" placeholder="${t('power_ph')}" min="1">
       <input type="number" id="f-max" placeholder="${t('max_ph')}" min="1" value="1">
@@ -561,8 +568,10 @@ function showEditForm(i) {
   const c = document.getElementById('device-form-container');
   c.innerHTML = `<div class="device-form">
     <div class="form-title">${t('edit_title')}</div>
-    <input type="text" id="f-name" placeholder="${t('name_ph')}" value="${d.name}">
-    <input type="text" id="f-group" placeholder="${t('group_ph')}" value="${d.group}">
+    <input type="text" id="f-name" placeholder="${t('name_ph')} (FR)" value="${d.name}">
+    <input type="text" id="f-name-ar" placeholder="${t('name_ph')} (AR)" value="${d.name_ar||''}" dir="auto">
+    <input type="text" id="f-group" placeholder="${t('group_ph')} (FR)" value="${d.group}">
+    <input type="text" id="f-group-ar" placeholder="${t('group_ph')} (AR)" value="${d.group_ar||''}" dir="auto">
     <div class="device-form-row">
       <input type="number" id="f-power" placeholder="${t('power_ph')}" value="${d.w}" min="1">
       <input type="number" id="f-max" placeholder="${t('max_ph')}" value="${d.max}" min="1">
@@ -578,21 +587,25 @@ function showEditForm(i) {
 
 function saveNewDevice() {
   const name = document.getElementById('f-name').value.trim();
+  const name_ar = document.getElementById('f-name-ar').value.trim();
   const group = document.getElementById('f-group').value.trim();
+  const group_ar = document.getElementById('f-group-ar').value.trim();
   const w = parseInt(document.getElementById('f-power').value);
   const max = parseInt(document.getElementById('f-max').value) || 1;
   if (!name || !group || !w) return;
-  devices.push({ group, name, w, max, qty: 0 });
+  devices.push({ group, group_ar, name, name_ar, w, max, qty: 0 });
   saveDevices(); hideForm(); renderDevices(); updateStats();
 }
 
 function saveEditDevice(i) {
   const name = document.getElementById('f-name').value.trim();
+  const name_ar = document.getElementById('f-name-ar').value.trim();
   const group = document.getElementById('f-group').value.trim();
+  const group_ar = document.getElementById('f-group-ar').value.trim();
   const w = parseInt(document.getElementById('f-power').value);
   const max = parseInt(document.getElementById('f-max').value) || 1;
   if (!name || !group || !w) return;
-  devices[i] = { ...devices[i], name, group, w, max };
+  devices[i] = { ...devices[i], name, name_ar, group, group_ar, w, max };
   saveDevices(); hideForm(); renderDevices(); updateStats();
 }
 

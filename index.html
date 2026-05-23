@@ -452,13 +452,24 @@ function calcDepletion(autoH) {
   const sunriseMins = sh * 60 + sm;
 
   // Si le soleil est déjà levé
-  if (nowMins >= sunriseMins) {
-    const msg = lang === 'ar' ? '☀ الشمس مشرقة — الألواح نشطة' : '☀ Soleil levé : panneaux actifs';
+  if (!overcast && nowMins >= sunriseMins) {
+    const msg = lang === 'ar' ? '☀ الشمس مشرقة : الألواح نشطة' : '☀ Soleil levé : panneaux actifs';
     return {
       time: timeStr,
       srMsg: msg,
       srOk: true,
       color: 'var(--green)'
+    };
+  }
+
+  // Mode ciel couvert en journée
+  if (overcast && nowMins >= sunriseMins) {
+    const msg = lang === 'ar' ? '🌧 سماء ملبدة : الألواح غير فعالة' : '🌧 Ciel couvert : panneaux insuffisants';
+    return {
+      time: timeStr,
+      srMsg: msg,
+      srOk: false,
+      color: 'var(--amber)'
     };
   }
 
@@ -552,7 +563,6 @@ function updateStats() {
   const msgEl = document.getElementById('sunrise-msg');
 
   if (isSunUp()) {
-    const chargingMsg = lang === 'ar' ? '⚡ البطارية تشحن' : '⚡ En charge';
     const chargingLabel = lang === 'ar' ? 'حالة البطارية' : 'État batterie';
     document.getElementById('lbl-depleted-at').textContent = chargingLabel;
     timeEl.textContent = '—';

@@ -1,4 +1,4 @@
-const CACHE = 'pv-monitor-v5';
+const CACHE = 'pv-monitor-v6';
 const ASSETS = [
   '/',
   '/index.html',

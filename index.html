@@ -438,9 +438,10 @@ function calcDepletion(autoH) {
 
   // Si le soleil est déjà levé
   if (nowMins >= sunriseMins) {
+    const msg = lang === 'ar' ? '☀ الشمس مشرقة — الألواح نشطة' : '☀ Soleil levé : panneaux actifs';
     return {
       time: timeStr,
-      srMsg: '☀ Soleil levé — panneaux actifs',
+      srMsg: msg,
       srOk: true,
       color: 'var(--green)'
     };

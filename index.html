@@ -45,11 +45,7 @@
     .logo-text { font-size: 16px; font-weight: 700; color: var(--text); letter-spacing: -0.02em; }
     .logo-sub { font-size: 11px; color: var(--text3); font-weight: 400; margin-top: 1px; }
     .settings-btn { background: var(--surface); border: 0.5px solid var(--border2); border-radius: 10px; color: var(--text2); font-size: 17px; width: 38px; height: 38px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow); }
-    .sync-btn { background: var(--green-light); border: 0.5px solid var(--green-mid); border-radius: 10px; color: var(--green); font-size: 17px; width: 38px; height: 38px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow); margin-right: 6px; transition: opacity 0.2s; }
-    .sync-btn.syncing { opacity: 0.5; pointer-events: none; animation: spin 1s linear infinite; }
-    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-    .sync-toast { position: fixed; bottom: calc(env(safe-area-inset-bottom,0) + 20px); left: 50%; transform: translateX(-50%); background: var(--text); color: #fff; font-size: 13px; font-weight: 600; padding: 10px 18px; border-radius: 20px; z-index: 300; opacity: 0; transition: opacity 0.3s; pointer-events: none; white-space: nowrap; }
-    .sync-toast.show { opacity: 1; }
+
 
     /* MAIN */
     .main { flex: 1; overflow-y: auto; padding: 12px 16px calc(env(safe-area-inset-bottom, 0) + 20px); }
@@ -176,9 +172,6 @@
         <div class="logo-text">PV Monitor</div>
       </div>
     </div>
-    <button class="sync-btn" id="sync-btn" onclick="syncFSolar()" title="Synchroniser FSolar">
-      <span id="sync-icon">☀</span>
-    </button>
     <button class="settings-btn" onclick="openPanel()">⚙</button>
   </div>
 </header>
@@ -253,14 +246,6 @@
     <div class="panel-handle"></div>
     <div class="panel-title" id="lbl-settings">Paramètres</div>
 
-    <div class="panel-section">Connexion FSolar</div>
-    <div class="panel-row" style="flex-direction:column; align-items:flex-start; gap:8px;">
-      <div class="panel-row-label">Token Bearer</div>
-      <textarea id="fsolar-token" rows="3" style="width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:'DM Mono',monospace;font-size:11px;padding:8px;resize:none;line-height:1.4;" placeholder="Colle ton token Bearer ici..."></textarea>
-      <div style="font-size:11px;color:var(--text3);">PlantId : <strong>10624262424571393</strong> · DeviceSn : <strong>0203080048240400094</strong></div>
-      <button onclick="saveToken()" style="padding:8px 16px;background:var(--green);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Enregistrer le token</button>
-    </div>
-
     <div class="panel-section" id="lbl-section-general">Général</div>
     <div class="panel-row">
       <div>
@@ -297,7 +282,6 @@
   </div>
 </div>
 
-<div class="sync-toast" id="sync-toast"></div>
 
 <script>
 const BATT_CAPACITY = 10000;
@@ -306,10 +290,6 @@ const STATE_KEY = 'pv_state';
 const LANG_KEY = 'pv_lang';
 const DEVICES_KEY = 'pv_devices';
 const ALERT_KEY = 'pv_alert';
-const TOKEN_KEY = 'pv_fsolar_token';
-const FSOLAR_PLANT = '10624262424571393';
-const FSOLAR_DEVICE = '0203080048240400094';
-const FSOLAR_API = 'https://shine-api.felicitysolar.com/app/device/get_energy_flow2';
 
 const T = {
   fr: {
@@ -634,79 +614,10 @@ function saveEditDevice(i) {
 function deleteDevice(i) { devices.splice(i, 1); saveDevices(); hideForm(); renderDevices(); updateStats(); }
 function hideForm() { document.getElementById('device-form-container').innerHTML = ''; }
 
-function saveToken() {
-  const val = document.getElementById('fsolar-token').value.trim();
-  if (!val) return;
-  localStorage.setItem(TOKEN_KEY, val);
-  showToast('Token enregistré ✓');
-}
-
-function showToast(msg, duration = 2500) {
-  const el = document.getElementById('sync-toast');
-  el.textContent = msg;
-  el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), duration);
-}
-
-async function syncFSolar() {
-  const token = localStorage.getItem(TOKEN_KEY);
-  if (!token) { showToast('Token FSolar manquant — configure-le dans ⚙'); return; }
-  const btn = document.getElementById('sync-btn');
-  btn.classList.add('syncing');
-  try {
-    const now = new Date();
-    const pad = n => String(n).padStart(2, '0');
-    const dateStr = now.getFullYear() + '-' + pad(now.getMonth()+1) + '-' + pad(now.getDate()) + '%20' + pad(now.getHours()) + '%3A' + pad(now.getMinutes()) + '%3A' + pad(now.getSeconds());
-    const url = FSOLAR_API + '?dataTimeStr=' + dateStr + '&deviceSn=' + FSOLAR_DEVICE + '&plantId=' + FSOLAR_PLANT;
-    const resp = await fetch(url, {
-      headers: {
-        'Authorization': token.startsWith('Bearer') ? token : 'Bearer ' + token,
-        'Accept': '*/*',
-        'lang': 'fr_FR'
-      }
-    });
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    const json = await resp.json();
-    const data = json.data;
-    if (!data) throw new Error('Données vides');
-    // Chercher le SOC dans tous les champs possibles
-    function extractSoc(d) {
-      const candidates = ['emsSoc', 'emsSoc2', 'batterySoc', 'soc', 'bmsSoc', 'SOC', 'battSoc'];
-      for (const k of candidates) {
-        const v = parseFloat(d[k]);
-        if (!isNaN(v) && v > 0 && v <= 100) return v;
-      }
-      // Chercher dans les sous-objets
-      for (const k of Object.keys(d)) {
-        if (typeof d[k] === 'object' && d[k] !== null) {
-          const v = extractSoc(d[k]);
-          if (v > 0) return v;
-        }
-      }
-      return 0;
-    }
-    const soc = extractSoc(data);
-    if (soc > 0 && soc <= 100) {
-      document.getElementById('batt-range').value = soc;
-      updateBatt(soc);
-      showToast('✓ SOC synchronisé : ' + soc + '%');
-    } else {
-      const allKeys = Object.keys(data).join(', ');
-      showToast('Champs : ' + allKeys.substring(0, 80), 5000);
-    }
-  } catch(e) {
-    showToast('Erreur : ' + e.message);
-  } finally {
-    btn.classList.remove('syncing');
-  }
-}
-
 function openPanel() {
   document.getElementById('panel').classList.add('open');
   document.getElementById('sunrise-input').value = sunriseTime;
   document.getElementById('alert-input').value = alertThreshold;
-  const tok = localStorage.getItem(TOKEN_KEY) || '';
-  document.getElementById('fsolar-token').value = tok;
 }
 function closePanel() { document.getElementById('panel').classList.remove('open'); }
 function closeIfOverlay(e) { if (e.target === document.getElementById('panel')) closePanel(); }

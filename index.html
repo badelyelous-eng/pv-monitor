@@ -125,6 +125,9 @@
 
     /* ADD BUTTON */
     .add-device-btn { width: 100%; padding: 14px; background: transparent; border: 1.5px dashed var(--border2); border-radius: 16px; color: var(--text3); font-size: 14px; font-weight: 500; cursor: pointer; margin-bottom: 14px; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .overcast-btn { width: 100%; padding: 13px 16px; border-radius: 14px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 12px; transition: all 0.2s; }
+    .overcast-off { background: var(--green-light); color: var(--green); border: 1px solid var(--green-mid); }
+    .overcast-on  { background: #e8eef5; color: #3a5a7a; border: 1px solid #b0c8e0; animation: pulse-border 2s infinite; }
     .add-device-btn:active { background: var(--surface); }
 
     /* DEVICE FORM */
@@ -233,6 +236,8 @@
   </div>
 
   <!-- Devices -->
+  <button id="overcast-btn" class="overcast-btn overcast-off" onclick="toggleOvercast()">☀ Ciel couvert : inactif</button>
+
   <div class="section-label" id="lbl-devices">Appareils</div>
   <div id="device-list"></div>
   <div id="device-form-container"></div>
@@ -384,6 +389,7 @@ function setLang(l) {
   applyTranslations();
   renderDevices();
   updateBatt(battPct);
+  updateOvercastBtn();
 }
 
 function applyTranslations() {
@@ -473,12 +479,35 @@ function getHeroColor(pct) {
   return { color: 'var(--red)', light: '#fdeaea' };
 }
 
+const OVERCAST_KEY = 'pv_overcast';
+let overcast = localStorage.getItem(OVERCAST_KEY) === 'true';
+
 function isSunUp() {
+  if (overcast) return false;
   const now = new Date();
   const nowMins = now.getHours() * 60 + now.getMinutes();
   const [sh, sm] = sunriseTime.split(':').map(Number);
   const [sth, stm] = (sunsetTime || '18:00').split(':').map(Number);
   return nowMins >= sh * 60 + sm && nowMins < sth * 60 + stm;
+}
+
+function toggleOvercast() {
+  overcast = !overcast;
+  localStorage.setItem(OVERCAST_KEY, overcast);
+  updateOvercastBtn();
+  updateBatt(battPct);
+}
+
+function updateOvercastBtn() {
+  const btn = document.getElementById('overcast-btn');
+  if (!btn) return;
+  if (overcast) {
+    btn.textContent = lang === 'ar' ? '🌧 وضع الغيوم : نشط' : '🌧 Ciel couvert : actif';
+    btn.className = 'overcast-btn overcast-on';
+  } else {
+    btn.textContent = lang === 'ar' ? '☀ وضع الغيوم : غير نشط' : '☀ Ciel couvert : inactif';
+    btn.className = 'overcast-btn overcast-off';
+  }
 }
 
 function updateBatt(val) {
@@ -611,7 +640,7 @@ function getExistingGroups() {
 
 function groupSelectHTML(selectedFr) {
   const groups = getExistingGroups();
-  const otherLabel = lang === 'ar' ? 'أخرى...' : 'Autre...';
+  const otherLabel = lang === 'ar' ? '+ فئة جديدة' : '+ Nouvelle catégorie';
   let opts = `<option value="" disabled ${!selectedFr ? 'selected' : ''}>${lang === 'ar' ? 'اختر فئة' : 'Choisir une catégorie'}</option>`;
   groups.forEach(g => {
     const label = lang === 'ar' ? g.ar : g.fr;
@@ -743,6 +772,7 @@ loadState();
 setLang(lang);
 renderDevices();
 updateBatt(battPct);
+updateOvercastBtn();
 </script>
 </body>
 </html>

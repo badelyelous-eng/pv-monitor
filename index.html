@@ -669,13 +669,15 @@ async function syncFSolar() {
     const json = await resp.json();
     const data = json.data;
     if (!data) throw new Error('Données vides');
-    const soc = parseInt(data.emsSoc || data.emsSoc2 || 0);
+    const soc = parseInt(data.emsSoc) || parseInt(data.emsSoc2) || parseInt(data.batterySoc) || parseInt(data.soc) || parseInt(data.bmsSoc) || 0;
     if (soc > 0 && soc <= 100) {
       document.getElementById('batt-range').value = soc;
       updateBatt(soc);
       showToast('✓ SOC synchronisé : ' + soc + '%');
     } else {
-      showToast('Réponse reçue mais SOC invalide : ' + soc);
+      // Debug : afficher tous les champs disponibles
+      const keys = Object.keys(data).filter(k => k.toLowerCase().includes('soc') || k.toLowerCase().includes('batt') || k.toLowerCase().includes('charge'));
+      showToast('Champs trouvés : ' + (keys.join(', ') || 'aucun'), 4000);
     }
   } catch(e) {
     showToast('Erreur : ' + e.message);

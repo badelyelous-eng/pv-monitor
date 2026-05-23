@@ -251,7 +251,13 @@
       <div>
         <div class="panel-row-label" id="lbl-sunrise-param">Lever du soleil</div>
       </div>
-      <input type="time" id="sunrise-input" value="06:00" oninput="saveSunrise(this.value)">
+      <input type="time" id="sunrise-input" value="05:29" oninput="saveSunrise(this.value)">
+    </div>
+    <div class="panel-row">
+      <div>
+        <div class="panel-row-label" id="lbl-sunset-param">Coucher du soleil</div>
+      </div>
+      <input type="time" id="sunset-input" value="18:08" oninput="saveSunset(this.value)">
     </div>
     <div class="panel-row">
       <div>
@@ -299,7 +305,7 @@ const T = {
     depleted_at: 'Épuisement prévu',
     devices: 'Appareils', add_device: 'Ajouter un appareil',
     settings: 'Paramètres', section_general: 'Général',
-    sunrise_param: 'Lever du soleil', capacity_param: 'Capacité batterie',
+    sunrise_param: 'Lever du soleil', sunset_param: 'Coucher du soleil', capacity_param: 'Capacité batterie',
     section_alert: 'Alerte autonomie', alert_threshold: 'Seuil d\'alerte',
     alert_sub: 'Alerte si autonomie < N heures',
     section_lang: 'Langue / Language', close: 'Fermer',
@@ -320,7 +326,7 @@ const T = {
     depleted_at: 'وقت النفاد المتوقع',
     devices: 'الأجهزة', add_device: 'إضافة جهاز',
     settings: 'الإعدادات', section_general: 'عام',
-    sunrise_param: 'وقت شروق الشمس', capacity_param: 'سعة البطارية',
+    sunrise_param: 'وقت شروق الشمس', sunset_param: 'وقت غروب الشمس', capacity_param: 'سعة البطارية',
     section_alert: 'تنبيه الاستقلالية', alert_threshold: 'عتبة التنبيه',
     alert_sub: 'تنبيه إذا كانت الاستقلالية < N ساعات',
     section_lang: 'Langue / Language', close: 'إغلاق',
@@ -359,7 +365,9 @@ const defaultDevices = [
 
 let devices = [];
 let battPct = 65;
-let sunriseTime = localStorage.getItem(SUNRISE_KEY) || '06:00';
+const SUNSET_KEY = 'pv_sunset';
+let sunriseTime = localStorage.getItem(SUNRISE_KEY) || '05:29';
+let sunsetTime = localStorage.getItem(SUNSET_KEY) || '18:08';
 let lang = localStorage.getItem(LANG_KEY) || 'fr';
 let alertThreshold = parseFloat(localStorage.getItem(ALERT_KEY)) || 2;
 
@@ -387,6 +395,7 @@ function applyTranslations() {
     'lbl-devices': 'devices', 'lbl-add-device': 'add_device',
     'lbl-settings': 'settings', 'lbl-section-general': 'section_general',
     'lbl-sunrise-param': 'sunrise_param', 'lbl-capacity-param': 'capacity_param',
+    'lbl-sunset-param': 'sunset_param',
     'lbl-section-alert': 'section_alert', 'lbl-alert-threshold': 'alert_threshold',
     'lbl-alert-sub': 'alert_sub',
     'lbl-section-lang': 'section_lang', 'lbl-close': 'close',
@@ -464,9 +473,19 @@ function getHeroColor(pct) {
   return { color: 'var(--red)', light: '#fdeaea' };
 }
 
+function isSunUp() {
+  const now = new Date();
+  const nowMins = now.getHours() * 60 + now.getMinutes();
+  const [sh, sm] = sunriseTime.split(':').map(Number);
+  const [sth, stm] = (sunsetTime || '18:00').split(':').map(Number);
+  return nowMins >= sh * 60 + sm && nowMins < sth * 60 + stm;
+}
+
 function updateBatt(val) {
   battPct = parseInt(val);
-  const { color, light } = getHeroColor(battPct);
+  const sunUp = isSunUp();
+  const color = sunUp ? 'var(--green)' : getHeroColor(battPct).color;
+  const light = sunUp ? '#e8f5ee' : getHeroColor(battPct).light;
   const avail = Math.round(BATT_CAPACITY * battPct / 100);
   document.getElementById('batt-pct-disp').textContent = battPct + '%';
   document.getElementById('batt-pct-disp').style.color = color;
@@ -476,9 +495,17 @@ function updateBatt(val) {
   document.getElementById('hero-card').style.setProperty('--hero-color-light', light);
   document.getElementById('batt-kwh').textContent = avail.toLocaleString('fr-FR');
   const pill = document.getElementById('batt-pill');
-  if (battPct > 50) { pill.textContent = t('good'); pill.className = 'hero-pill pill-good'; }
-  else if (battPct > 20) { pill.textContent = t('mid'); pill.className = 'hero-pill pill-mid'; }
-  else { pill.textContent = t('low'); pill.className = 'hero-pill pill-low'; }
+  if (sunUp) {
+    const chargingMsg = lang === 'ar' ? '⚡ البطارية تشحن' : '⚡ En charge';
+    pill.textContent = chargingMsg;
+    pill.className = 'hero-pill pill-good';
+  } else if (battPct > 50) {
+    pill.textContent = t('good'); pill.className = 'hero-pill pill-good';
+  } else if (battPct > 20) {
+    pill.textContent = t('mid'); pill.className = 'hero-pill pill-mid';
+  } else {
+    pill.textContent = t('low'); pill.className = 'hero-pill pill-low';
+  }
   updateStats();
 }
 
@@ -508,10 +535,11 @@ function updateStats() {
     msgEl.className = 'dep-badge' + (d.srOk ? ' ok' : ' warn');
   }
 
-  // Alert
+  // Alert autonomie — masquée si soleil levé
   const banner = document.getElementById('alert-banner');
-  const alertSub = document.getElementById('alert-sub');
-  if (total > 0 && isFinite(autoH) && alertThreshold > 0 && autoH < alertThreshold) {
+  if (isSunUp()) {
+    banner.classList.remove('visible');
+  } else if (total > 0 && isFinite(autoH) && alertThreshold > 0 && autoH < alertThreshold) {
     banner.classList.add('visible');
     alertSub.textContent = formatHours(autoH) + ' restantes — ' + t('warn_msg').replace('✗ ', '');
   } else {
@@ -630,11 +658,13 @@ function hideForm() { document.getElementById('device-form-container').innerHTML
 function openPanel() {
   document.getElementById('panel').classList.add('open');
   document.getElementById('sunrise-input').value = sunriseTime;
+  document.getElementById('sunset-input').value = sunsetTime;
   document.getElementById('alert-input').value = alertThreshold;
 }
 function closePanel() { document.getElementById('panel').classList.remove('open'); }
 function closeIfOverlay(e) { if (e.target === document.getElementById('panel')) closePanel(); }
-function saveSunrise(val) { sunriseTime = val; localStorage.setItem(SUNRISE_KEY, val); updateStats(); }
+function saveSunrise(val) { sunriseTime = val; localStorage.setItem(SUNRISE_KEY, val); updateBatt(battPct); }
+function saveSunset(val) { sunsetTime = val; localStorage.setItem(SUNSET_KEY, val); updateBatt(battPct); }
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });

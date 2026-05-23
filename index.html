@@ -669,15 +669,30 @@ async function syncFSolar() {
     const json = await resp.json();
     const data = json.data;
     if (!data) throw new Error('Données vides');
-    const soc = parseInt(data.emsSoc) || parseInt(data.emsSoc2) || parseInt(data.batterySoc) || parseInt(data.soc) || parseInt(data.bmsSoc) || 0;
+    // Chercher le SOC dans tous les champs possibles
+    function extractSoc(d) {
+      const candidates = ['emsSoc', 'emsSoc2', 'batterySoc', 'soc', 'bmsSoc', 'SOC', 'battSoc'];
+      for (const k of candidates) {
+        const v = parseFloat(d[k]);
+        if (!isNaN(v) && v > 0 && v <= 100) return v;
+      }
+      // Chercher dans les sous-objets
+      for (const k of Object.keys(d)) {
+        if (typeof d[k] === 'object' && d[k] !== null) {
+          const v = extractSoc(d[k]);
+          if (v > 0) return v;
+        }
+      }
+      return 0;
+    }
+    const soc = extractSoc(data);
     if (soc > 0 && soc <= 100) {
       document.getElementById('batt-range').value = soc;
       updateBatt(soc);
       showToast('✓ SOC synchronisé : ' + soc + '%');
     } else {
-      // Debug : afficher tous les champs disponibles
-      const keys = Object.keys(data).filter(k => k.toLowerCase().includes('soc') || k.toLowerCase().includes('batt') || k.toLowerCase().includes('charge'));
-      showToast('Champs trouvés : ' + (keys.join(', ') || 'aucun'), 4000);
+      const allKeys = Object.keys(data).join(', ');
+      showToast('Champs : ' + allKeys.substring(0, 80), 5000);
     }
   } catch(e) {
     showToast('Erreur : ' + e.message);

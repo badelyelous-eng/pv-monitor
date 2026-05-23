@@ -1,4 +1,4 @@
-const CACHE = 'pv-monitor-v11';
+const CACHE = 'pv-monitor-v12';
 const ASSETS = [
   '/',
   '/index.html',
@@ -25,3 +25,4 @@ self.addEventListener('fetch', e => {
     caches.match(e.request).then(cached => cached || fetch(e.request))
   );
 });
+ 

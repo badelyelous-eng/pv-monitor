@@ -434,8 +434,20 @@ function calcDepletion(autoH) {
   const dH = Math.floor(depMins / 60) % 24, dM = depMins % 60;
   const timeStr = String(dH).padStart(2,'0') + ':' + String(dM).padStart(2,'0');
   const [sh, sm] = sunriseTime.split(':').map(Number);
-  let diffMins = sh * 60 + sm - nowMins;
-  if (diffMins < 0) diffMins += 1440;
+  const sunriseMins = sh * 60 + sm;
+
+  // Si le soleil est déjà levé
+  if (nowMins >= sunriseMins) {
+    return {
+      time: timeStr,
+      srMsg: '☀ Soleil levé — panneaux actifs',
+      srOk: true,
+      color: 'var(--green)'
+    };
+  }
+
+  // Sinon comparer avec le prochain lever
+  const diffMins = sunriseMins - nowMins;
   const ok = autoMins >= diffMins;
   return {
     time: timeStr,

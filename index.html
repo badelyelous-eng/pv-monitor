@@ -596,21 +596,69 @@ function renderDevices() {
   list.innerHTML = html;
 }
 
+function getExistingGroups() {
+  const seen = new Set();
+  const groups = [];
+  devices.forEach(d => {
+    const key = d.group;
+    if (!seen.has(key)) {
+      seen.add(key);
+      groups.push({ fr: d.group, ar: d.group_ar || d.group });
+    }
+  });
+  return groups;
+}
+
+function groupSelectHTML(selectedFr) {
+  const groups = getExistingGroups();
+  const otherLabel = lang === 'ar' ? 'أخرى...' : 'Autre...';
+  let opts = `<option value="" disabled ${!selectedFr ? 'selected' : ''}>${lang === 'ar' ? 'اختر فئة' : 'Choisir une catégorie'}</option>`;
+  groups.forEach(g => {
+    const label = lang === 'ar' ? g.ar : g.fr;
+    const sel = selectedFr === g.fr ? 'selected' : '';
+    opts += `<option value="${g.fr}" data-ar="${g.ar}" ${sel}>${label}</option>`;
+  });
+  opts += `<option value="__other__">${otherLabel}</option>`;
+  return `<select id="f-group-select" onchange="onGroupSelect()" style="width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:10px;color:var(--text);font-family:inherit;font-size:14px;padding:11px 13px;margin-bottom:10px;outline:none;appearance:none;">${opts}</select>
+  <input type="text" id="f-group-custom" placeholder="${lang === 'ar' ? 'اسم الفئة الجديدة' : 'Nom de la nouvelle catégorie'}" style="display:none;margin-bottom:10px;" class="device-form-input">`;
+}
+
+function onGroupSelect() {
+  const sel = document.getElementById('f-group-select');
+  const custom = document.getElementById('f-group-custom');
+  custom.style.display = sel.value === '__other__' ? 'block' : 'none';
+}
+
+function getFormGroup() {
+  const sel = document.getElementById('f-group-select');
+  if (!sel) return { fr: '', ar: '' };
+  if (sel.value === '__other__') {
+    const custom = document.getElementById('f-group-custom').value.trim();
+    return { fr: custom, ar: custom };
+  }
+  const opt = sel.options[sel.selectedIndex];
+  return { fr: sel.value, ar: opt ? (opt.dataset.ar || sel.value) : sel.value };
+}
+
 function showAddForm() {
   const c = document.getElementById('device-form-container');
+  const namePh = lang === 'ar' ? 'اسم الجهاز' : "Nom de l'appareil";
+  const powerPh = lang === 'ar' ? 'الاستهلاك (واط)' : 'Puissance (W)';
+  const maxPh = lang === 'ar' ? 'الكمية القصوى' : 'Quantité max';
+  const title = lang === 'ar' ? 'جهاز جديد' : 'Nouvel appareil';
+  const saveLabel = lang === 'ar' ? 'حفظ' : 'Enregistrer';
+  const cancelLabel = lang === 'ar' ? 'إلغاء' : 'Annuler';
   c.innerHTML = `<div class="device-form">
-    <div class="form-title">${t('add_title')}</div>
-    <input type="text" id="f-name" placeholder="${t('name_ph')} (FR)">
-    <input type="text" id="f-name-ar" placeholder="${t('name_ph')} (AR — اختياري)" dir="auto">
-    <input type="text" id="f-group" placeholder="${t('group_ph')} (FR)">
-    <input type="text" id="f-group-ar" placeholder="${t('group_ph')} (AR — اختياري)" dir="auto">
+    <div class="form-title">${title}</div>
+    <input type="text" id="f-name" placeholder="${namePh}" style="margin-bottom:10px;">
+    ${groupSelectHTML('')}
     <div class="device-form-row">
-      <input type="number" id="f-power" placeholder="${t('power_ph')}" min="1">
-      <input type="number" id="f-max" placeholder="${t('max_ph')}" min="1" value="1">
+      <input type="number" id="f-power" placeholder="${powerPh}" min="1">
+      <input type="number" id="f-max" placeholder="${maxPh}" min="1" value="1">
     </div>
     <div class="form-btns">
-      <button class="btn-cancel" onclick="hideForm()">${t('cancel')}</button>
-      <button class="btn-save" onclick="saveNewDevice()">${t('save')}</button>
+      <button class="btn-cancel" onclick="hideForm()">${cancelLabel}</button>
+      <button class="btn-save" onclick="saveNewDevice()">${saveLabel}</button>
     </div>
   </div>`;
   c.scrollIntoView({ behavior: 'smooth' });
@@ -619,46 +667,56 @@ function showAddForm() {
 function showEditForm(i) {
   const d = devices[i];
   const c = document.getElementById('device-form-container');
+  const namePh = lang === 'ar' ? 'اسم الجهاز' : "Nom de l'appareil";
+  const powerPh = lang === 'ar' ? 'الاستهلاك (واط)' : 'Puissance (W)';
+  const maxPh = lang === 'ar' ? 'الكمية القصوى' : 'Quantité max';
+  const title = lang === 'ar' ? 'تعديل الجهاز' : "Modifier l'appareil";
+  const saveLabel = lang === 'ar' ? 'حفظ' : 'Enregistrer';
+  const cancelLabel = lang === 'ar' ? 'إلغاء' : 'Annuler';
+  const deleteLabel = lang === 'ar' ? 'حذف' : 'Supprimer';
+  const nameVal = lang === 'ar' ? (d.name_ar || d.name) : d.name;
   c.innerHTML = `<div class="device-form">
-    <div class="form-title">${t('edit_title')}</div>
-    <input type="text" id="f-name" placeholder="${t('name_ph')} (FR)" value="${d.name}">
-    <input type="text" id="f-name-ar" placeholder="${t('name_ph')} (AR)" value="${d.name_ar||''}" dir="auto">
-    <input type="text" id="f-group" placeholder="${t('group_ph')} (FR)" value="${d.group}">
-    <input type="text" id="f-group-ar" placeholder="${t('group_ph')} (AR)" value="${d.group_ar||''}" dir="auto">
+    <div class="form-title">${title}</div>
+    <input type="text" id="f-name" placeholder="${namePh}" value="${nameVal}" style="margin-bottom:10px;">
+    ${groupSelectHTML(d.group)}
     <div class="device-form-row">
-      <input type="number" id="f-power" placeholder="${t('power_ph')}" value="${d.w}" min="1">
-      <input type="number" id="f-max" placeholder="${t('max_ph')}" value="${d.max}" min="1">
+      <input type="number" id="f-power" placeholder="${powerPh}" value="${d.w}" min="1">
+      <input type="number" id="f-max" placeholder="${maxPh}" value="${d.max}" min="1">
     </div>
     <div class="form-btns">
-      <button class="btn-delete" onclick="deleteDevice(${i})">${t('delete')}</button>
-      <button class="btn-cancel" onclick="hideForm()">${t('cancel')}</button>
-      <button class="btn-save" onclick="saveEditDevice(${i})">${t('save')}</button>
+      <button class="btn-delete" onclick="deleteDevice(${i})">${deleteLabel}</button>
+      <button class="btn-cancel" onclick="hideForm()">${cancelLabel}</button>
+      <button class="btn-save" onclick="saveEditDevice(${i})">${saveLabel}</button>
     </div>
   </div>`;
   c.scrollIntoView({ behavior: 'smooth' });
 }
 
 function saveNewDevice() {
-  const name = document.getElementById('f-name').value.trim();
-  const name_ar = document.getElementById('f-name-ar').value.trim();
-  const group = document.getElementById('f-group').value.trim();
-  const group_ar = document.getElementById('f-group-ar').value.trim();
+  const nameInput = document.getElementById('f-name').value.trim();
+  if (!nameInput) return;
+  const { fr: groupFr, ar: groupAr } = getFormGroup();
+  if (!groupFr) return;
   const w = parseInt(document.getElementById('f-power').value);
   const max = parseInt(document.getElementById('f-max').value) || 1;
-  if (!name || !group || !w) return;
-  devices.push({ group, group_ar, name, name_ar, w, max, qty: 0 });
+  if (!w) return;
+  const name = lang === 'ar' ? '' : nameInput;
+  const name_ar = lang === 'ar' ? nameInput : '';
+  devices.push({ group: groupFr, group_ar: groupAr, name: name || nameInput, name_ar, w, max, qty: 0 });
   saveDevices(); hideForm(); renderDevices(); updateStats();
 }
 
 function saveEditDevice(i) {
-  const name = document.getElementById('f-name').value.trim();
-  const name_ar = document.getElementById('f-name-ar').value.trim();
-  const group = document.getElementById('f-group').value.trim();
-  const group_ar = document.getElementById('f-group-ar').value.trim();
+  const nameInput = document.getElementById('f-name').value.trim();
+  if (!nameInput) return;
+  const { fr: groupFr, ar: groupAr } = getFormGroup();
+  if (!groupFr) return;
   const w = parseInt(document.getElementById('f-power').value);
   const max = parseInt(document.getElementById('f-max').value) || 1;
-  if (!name || !group || !w) return;
-  devices[i] = { ...devices[i], name, name_ar, group, group_ar, w, max };
+  if (!w) return;
+  const name = lang === 'ar' ? (devices[i].name || nameInput) : nameInput;
+  const name_ar = lang === 'ar' ? nameInput : (devices[i].name_ar || '');
+  devices[i] = { ...devices[i], name, name_ar, group: groupFr, group_ar: groupAr, w, max };
   saveDevices(); hideForm(); renderDevices(); updateStats();
 }
 

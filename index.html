@@ -522,12 +522,22 @@ function updateStats() {
   const timeEl = document.getElementById('depletion-time');
   const msgEl = document.getElementById('sunrise-msg');
 
-  if (total === 0) {
+  if (isSunUp()) {
+    const chargingMsg = lang === 'ar' ? '⚡ البطارية تشحن' : '⚡ En charge';
+    const chargingLabel = lang === 'ar' ? 'حالة البطارية' : 'État batterie';
+    document.getElementById('lbl-depleted-at').textContent = chargingLabel;
+    timeEl.textContent = '—';
+    card.style.setProperty('--dep-color', 'var(--green)');
+    msgEl.textContent = lang === 'ar' ? '☀ الشمس مشرقة : الألواح نشطة' : '☀ Soleil levé : panneaux actifs';
+    msgEl.className = 'dep-badge ok';
+  } else if (total === 0) {
+    document.getElementById('lbl-depleted-at').textContent = t('depleted_at');
     timeEl.textContent = '—';
     card.style.setProperty('--dep-color', '#ccc');
     msgEl.textContent = t('no_device');
     msgEl.className = 'dep-badge neutral';
   } else {
+    document.getElementById('lbl-depleted-at').textContent = t('depleted_at');
     const d = calcDepletion(autoH);
     timeEl.textContent = d.time;
     card.style.setProperty('--dep-color', d.color);

@@ -3,179 +3,240 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#0f1a14">
+  <meta name="theme-color" content="#f5f7f2">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="PV Monitor">
   <title>PV Monitor</title>
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icon-192.png">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Sora:wght@300;400;600&family=Cairo:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg: #0f1a14; --bg2: #162110; --bg3: #1e2d1a;
-      --surface: #1a2b1f; --surface2: #223328;
-      --border: rgba(255,255,255,0.07); --border2: rgba(255,255,255,0.12);
-      --text: #e8f0e4; --text2: #8aab8a; --text3: #5a7a5a;
-      --green: #4dde8a; --amber: #f0b429; --red: #f05050;
+      --bg: #f0f4ee;
+      --bg2: #e8ede5;
+      --surface: #ffffff;
+      --surface2: #f5f8f3;
+      --border: rgba(0,0,0,0.07);
+      --border2: rgba(0,0,0,0.12);
+      --text: #1a2418;
+      --text2: #5a7055;
+      --text3: #96b090;
+      --green: #2d9e5f;
+      --green-light: #e8f5ee;
+      --green-mid: #a8dbbf;
+      --amber: #c8830a;
+      --amber-light: #fef3e0;
+      --red: #d64040;
+      --red-light: #fdeaea;
+      --shadow: 0 2px 12px rgba(0,0,0,0.06);
+      --shadow-lg: 0 4px 24px rgba(0,0,0,0.10);
     }
-    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Sora', sans-serif; font-size: 16px; -webkit-font-smoothing: antialiased; overscroll-behavior: none; }
+    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Plus Jakarta Sans', sans-serif; font-size: 16px; -webkit-font-smoothing: antialiased; overscroll-behavior: none; }
     body { display: flex; flex-direction: column; min-height: 100vh; min-height: -webkit-fill-available; }
     body.ar { font-family: 'Cairo', sans-serif; }
 
-    .header { position: sticky; top: 0; z-index: 100; background: var(--bg); border-bottom: 0.5px solid var(--border); padding: env(safe-area-inset-top, 0) 20px 0; }
+    /* HEADER */
+    .header { position: sticky; top: 0; z-index: 100; background: var(--bg); padding: env(safe-area-inset-top, 0) 20px 0; }
     .header-inner { display: flex; align-items: center; justify-content: space-between; height: 56px; }
     .logo { display: flex; align-items: center; gap: 8px; }
-    .logo-icon { width: 28px; height: 28px; }
-    .logo-text { font-size: 15px; font-weight: 600; color: var(--text); }
-    .settings-btn { background: none; border: 0.5px solid var(--border2); border-radius: 8px; color: var(--text2); font-size: 18px; width: 36px; height: 36px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .logo-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); }
+    .logo-text { font-size: 16px; font-weight: 700; color: var(--text); letter-spacing: -0.02em; }
+    .logo-sub { font-size: 11px; color: var(--text3); font-weight: 400; margin-top: 1px; }
+    .settings-btn { background: var(--surface); border: 0.5px solid var(--border2); border-radius: 10px; color: var(--text2); font-size: 17px; width: 38px; height: 38px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow); }
 
-    .main { flex: 1; overflow-y: auto; padding: 16px 16px calc(env(safe-area-inset-bottom, 0) + 16px); }
+    /* MAIN */
+    .main { flex: 1; overflow-y: auto; padding: 12px 16px calc(env(safe-area-inset-bottom, 0) + 20px); }
 
-    .battery-block { background: var(--surface); border: 0.5px solid var(--border); border-radius: 16px; padding: 18px 20px; margin-bottom: 14px; position: relative; overflow: hidden; }
-    .battery-block::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--bar-color, var(--green)); transition: background 0.4s; }
-    .batt-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 14px; }
-    .batt-pct { font-family: 'DM Mono', monospace; font-size: 48px; font-weight: 500; line-height: 1; color: var(--bar-color, var(--green)); transition: color 0.4s; }
-    .batt-meta { text-align: right; }
-    .batt-kwh { font-family: 'DM Mono', monospace; font-size: 18px; font-weight: 500; color: var(--text); }
-    .batt-kwh-label { font-size: 11px; color: var(--text3); margin-top: 2px; }
-    .batt-pill { display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; padding: 3px 10px; border-radius: 20px; margin-top: 6px; transition: background 0.4s, color 0.4s; }
-    .pill-good { background: rgba(77,222,138,0.12); color: var(--green); }
-    .pill-mid  { background: rgba(240,180,41,0.12); color: var(--amber); }
-    .pill-low  { background: rgba(240,80,80,0.12); color: var(--red); }
-    .track-bg { height: 6px; background: var(--bg3); border-radius: 3px; overflow: hidden; margin-bottom: 12px; }
-    .track-fill { height: 100%; border-radius: 3px; background: var(--bar-color, var(--green)); transition: width 0.2s, background 0.4s; }
-    input[type=range] { -webkit-appearance: none; width: 100%; height: 36px; background: transparent; cursor: pointer; }
-    input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%; background: var(--bar-color, var(--green)); border: 3px solid var(--bg); box-shadow: 0 0 0 1px var(--bar-color, var(--green)); transition: background 0.4s; }
-    input[type=range]::-webkit-slider-runnable-track { height: 6px; background: var(--bg3); border-radius: 3px; }
+    /* BATTERY HERO CARD */
+    .hero-card { background: var(--surface); border-radius: 24px; padding: 22px 20px 18px; margin-bottom: 12px; box-shadow: var(--shadow-lg); position: relative; overflow: hidden; }
+    .hero-card::after { content: ''; position: absolute; top: -40px; right: -40px; width: 120px; height: 120px; border-radius: 50%; background: var(--hero-color-light, #e8f5ee); transition: background 0.4s; pointer-events: none; }
+    .hero-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 16px; position: relative; z-index: 1; }
+    .hero-left {}
+    .hero-label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text3); margin-bottom: 4px; }
+    .hero-pct { font-family: 'DM Mono', monospace; font-size: 56px; font-weight: 500; line-height: 1; color: var(--hero-color, var(--green)); transition: color 0.4s; }
+    .hero-pill { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px; margin-top: 6px; }
+    .pill-good { background: var(--green-light); color: var(--green); }
+    .pill-mid  { background: var(--amber-light); color: var(--amber); }
+    .pill-low  { background: var(--red-light); color: var(--red); }
+    .hero-right { text-align: right; position: relative; z-index: 1; }
+    .hero-kwh { font-family: 'DM Mono', monospace; font-size: 22px; font-weight: 500; color: var(--text); }
+    .hero-kwh-label { font-size: 11px; color: var(--text3); margin-top: 2px; }
 
-    .stats-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
-    .stat-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: 14px; padding: 14px 16px; }
-    .stat-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 6px; }
-    .stat-val { font-family: 'DM Mono', monospace; font-size: 22px; font-weight: 500; color: var(--text); line-height: 1.1; }
-    .stat-unit { font-size: 13px; color: var(--text2); font-weight: 400; }
+    /* Battery arc */
+    .arc-wrap { position: relative; z-index: 1; margin: 4px 0 10px; }
+    .arc-track { width: 100%; height: 8px; background: var(--bg2); border-radius: 4px; overflow: hidden; }
+    .arc-fill { height: 100%; border-radius: 4px; background: var(--hero-color, var(--green)); transition: width 0.3s, background 0.4s; }
+    .arc-labels { display: flex; justify-content: space-between; margin-top: 5px; }
+    .arc-label { font-size: 10px; color: var(--text3); }
+    input[type=range] { -webkit-appearance: none; width: 100%; height: 38px; background: transparent; cursor: pointer; position: relative; z-index: 2; margin-top: -4px; }
+    input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 24px; height: 24px; border-radius: 50%; background: var(--hero-color, var(--green)); border: 3px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.15); transition: background 0.4s; }
+    input[type=range]::-webkit-slider-runnable-track { height: 8px; background: var(--bg2); border-radius: 4px; }
 
-    .depletion-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: 16px; padding: 18px 20px; margin-bottom: 14px; position: relative; overflow: hidden; }
-    .depletion-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--depletion-color, var(--text3)); transition: background 0.4s; }
-    .depletion-top { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 10px; }
-    .depletion-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; }
-    .depletion-time { font-family: 'DM Mono', monospace; font-size: 40px; font-weight: 500; color: var(--depletion-color, var(--text3)); line-height: 1; transition: color 0.4s; }
-    .depletion-bottom { font-size: 13px; font-weight: 600; padding: 6px 10px; border-radius: 8px; display: inline-block; transition: background 0.4s, color 0.4s; }
-    .depletion-bottom.ok   { background: rgba(77,222,138,0.1); color: var(--green); }
-    .depletion-bottom.warn { background: rgba(240,80,80,0.1); color: var(--red); }
-    .depletion-bottom.neutral { background: var(--bg3); color: var(--text3); }
+    /* ALERT BANNER */
+    .alert-banner { display: none; background: var(--red-light); border: 1px solid rgba(214,64,64,0.2); border-radius: 14px; padding: 12px 16px; margin-bottom: 12px; align-items: center; gap: 10px; }
+    .alert-banner.visible { display: flex; animation: pulse-border 1.5s infinite; }
+    @keyframes pulse-border { 0%,100% { border-color: rgba(214,64,64,0.2); } 50% { border-color: rgba(214,64,64,0.6); } }
+    .alert-icon { font-size: 22px; flex-shrink: 0; }
+    .alert-text { flex: 1; }
+    .alert-title { font-size: 13px; font-weight: 700; color: var(--red); }
+    .alert-sub { font-size: 12px; color: #a03030; margin-top: 2px; }
 
-    .section-label { font-size: 11px; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; color: var(--text3); margin: 18px 0 8px 2px; }
-    .device-block { background: var(--surface); border: 0.5px solid var(--border); border-radius: 16px; overflow: hidden; margin-bottom: 14px; }
-    .group-header { padding: 8px 18px; background: var(--bg3); border-bottom: 0.5px solid var(--border); }
-    .group-label { font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text3); }
-    .device-row { display: flex; align-items: center; padding: 11px 18px; border-bottom: 0.5px solid var(--border); gap: 10px; }
+    /* STATS ROW */
+    .stats-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; margin-bottom: 12px; }
+    .stat-card { background: var(--surface); border-radius: 18px; padding: 16px; box-shadow: var(--shadow); }
+    .stat-icon { font-size: 20px; margin-bottom: 6px; }
+    .stat-label { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text3); margin-bottom: 4px; }
+    .stat-val { font-family: 'DM Mono', monospace; font-size: 20px; font-weight: 500; color: var(--text); }
+    .stat-unit { font-size: 12px; color: var(--text2); font-weight: 400; }
+
+    /* DEPLETION CARD */
+    .depletion-card { background: var(--surface); border-radius: 20px; padding: 18px 20px; margin-bottom: 12px; box-shadow: var(--shadow); border-left: 4px solid var(--dep-color, #ddd); transition: border-color 0.4s; }
+    .dep-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .dep-label { font-size: 11px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text3); }
+    .dep-time { font-family: 'DM Mono', monospace; font-size: 42px; font-weight: 500; color: var(--dep-color, var(--text3)); line-height: 1; transition: color 0.4s; }
+    .dep-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 20px; }
+    .dep-badge.ok   { background: var(--green-light); color: var(--green); }
+    .dep-badge.warn { background: var(--red-light); color: var(--red); }
+    .dep-badge.neutral { background: var(--bg2); color: var(--text3); }
+
+    /* SECTION LABEL */
+    .section-label { font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text3); margin: 16px 0 8px 4px; }
+
+    /* DEVICE LIST */
+    .device-block { background: var(--surface); border-radius: 20px; overflow: hidden; margin-bottom: 10px; box-shadow: var(--shadow); }
+    .group-header { padding: 10px 18px; background: var(--surface2); border-bottom: 0.5px solid var(--border); display: flex; align-items: center; gap: 8px; }
+    .group-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text3); flex-shrink: 0; }
+    .group-label { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text2); }
+    .device-row { display: flex; align-items: center; padding: 12px 18px; border-bottom: 0.5px solid var(--border); gap: 10px; transition: background 0.15s; }
     .device-row:last-child { border-bottom: none; }
-    .device-row.active { background: rgba(77,222,138,0.04); }
-    .device-name { flex: 1; font-size: 14px; color: var(--text); }
-    .device-watt { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text3); min-width: 52px; text-align: right; }
-    .counter { display: flex; align-items: center; background: var(--bg3); border: 0.5px solid var(--border2); border-radius: 10px; overflow: hidden; }
-    .cbtn { width: 32px; height: 32px; background: none; border: none; color: var(--text2); font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; -webkit-tap-highlight-color: transparent; }
-    .cbtn:active { background: var(--surface2); }
+    .device-row.active { background: #f0faf4; }
+    .device-edit { width: 28px; height: 28px; background: none; border: none; color: var(--text3); font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; border-radius: 6px; }
+    .device-edit:active { background: var(--bg2); }
+    .device-name { flex: 1; font-size: 14px; font-weight: 500; color: var(--text); }
+    .device-watt { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text3); min-width: 48px; text-align: right; }
+    .counter { display: flex; align-items: center; background: var(--bg2); border-radius: 10px; overflow: hidden; }
+    .cbtn { width: 32px; height: 32px; background: none; border: none; color: var(--text2); font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; -webkit-tap-highlight-color: transparent; font-weight: 600; }
+    .cbtn:active { background: var(--border2); }
     .cval { font-family: 'DM Mono', monospace; font-size: 15px; font-weight: 500; min-width: 24px; text-align: center; color: var(--text); }
-    .cval.nonzero { color: var(--green); }
+    .cval.nonzero { color: var(--green); font-weight: 700; }
 
-    /* Add device button */
-    .add-device-btn { width: 100%; padding: 13px; background: transparent; border: 0.5px dashed var(--border2); border-radius: 12px; color: var(--text3); font-size: 14px; cursor: pointer; margin-bottom: 14px; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    /* ADD BUTTON */
+    .add-device-btn { width: 100%; padding: 14px; background: transparent; border: 1.5px dashed var(--border2); border-radius: 16px; color: var(--text3); font-size: 14px; font-weight: 500; cursor: pointer; margin-bottom: 14px; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 8px; }
     .add-device-btn:active { background: var(--surface); }
 
-    /* Panel overlay */
-    .panel-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 200; display: none; align-items: flex-end; }
-    .panel-overlay.open { display: flex; }
-    .panel { width: 100%; background: var(--surface); border-radius: 20px 20px 0 0; padding: 0 20px calc(env(safe-area-inset-bottom, 0) + 24px); border-top: 0.5px solid var(--border2); max-height: 90vh; overflow-y: auto; }
-    .panel-handle { width: 36px; height: 4px; background: var(--border2); border-radius: 2px; margin: 12px auto 20px; }
-    .panel-title { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 20px; }
-    .panel-row { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 0.5px solid var(--border); }
-    .panel-row:last-of-type { border-bottom: none; }
-    .panel-row-label { font-size: 14px; color: var(--text2); }
-    .panel-row input[type=time], .panel-row input[type=text], .panel-row input[type=number] { background: var(--bg3); border: 0.5px solid var(--border2); border-radius: 8px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 15px; padding: 6px 10px; width: 130px; }
-    .panel-row input[type=text] { font-family: inherit; width: 150px; }
-    .lang-toggle { display: flex; gap: 6px; }
-    .lang-btn { padding: 6px 14px; border-radius: 8px; border: 0.5px solid var(--border2); background: transparent; color: var(--text2); font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; }
-    .lang-btn.active { background: var(--green); color: var(--bg); border-color: var(--green); }
-    .panel-close { width: 100%; margin-top: 20px; padding: 13px; background: var(--bg3); border: 0.5px solid var(--border2); border-radius: 12px; color: var(--text); font-size: 15px; font-weight: 600; cursor: pointer; font-family: inherit; }
-    .panel-section { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text3); margin: 20px 0 4px; }
-
-    /* Device form */
-    .device-form { background: var(--bg3); border-radius: 12px; padding: 14px; margin-bottom: 14px; }
-    .device-form input { width: 100%; background: var(--surface); border: 0.5px solid var(--border2); border-radius: 8px; color: var(--text); font-family: inherit; font-size: 14px; padding: 10px 12px; margin-bottom: 10px; }
+    /* DEVICE FORM */
+    .device-form { background: var(--surface); border-radius: 20px; padding: 18px; margin-bottom: 12px; box-shadow: var(--shadow-lg); }
+    .form-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 14px; }
+    .device-form input { width: 100%; background: var(--bg); border: 1px solid var(--border2); border-radius: 10px; color: var(--text); font-family: inherit; font-size: 14px; padding: 11px 13px; margin-bottom: 10px; outline: none; }
+    .device-form input:focus { border-color: var(--green); }
     .device-form-row { display: flex; gap: 8px; }
     .device-form-row input { margin-bottom: 0; }
-    .form-btns { display: flex; gap: 8px; margin-top: 10px; }
-    .btn-save { flex: 1; padding: 10px; background: var(--green); color: var(--bg); border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; }
-    .btn-cancel { flex: 1; padding: 10px; background: transparent; color: var(--text2); border: 0.5px solid var(--border2); border-radius: 8px; font-size: 14px; cursor: pointer; font-family: inherit; }
-    .btn-delete { padding: 10px 14px; background: rgba(240,80,80,0.1); color: var(--red); border: 0.5px solid rgba(240,80,80,0.2); border-radius: 8px; font-size: 14px; cursor: pointer; font-family: inherit; }
+    .form-btns { display: flex; gap: 8px; margin-top: 12px; }
+    .btn-save { flex: 1; padding: 11px; background: var(--green); color: #fff; border: none; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; }
+    .btn-cancel { flex: 1; padding: 11px; background: var(--bg2); color: var(--text2); border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; }
+    .btn-delete { padding: 11px 14px; background: var(--red-light); color: var(--red); border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; }
 
-    /* Device edit icon */
-    .device-edit { width: 28px; height: 28px; background: none; border: none; color: var(--text3); font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    /* PANEL */
+    .panel-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 200; display: none; align-items: flex-end; backdrop-filter: blur(2px); }
+    .panel-overlay.open { display: flex; }
+    .panel { width: 100%; background: var(--surface); border-radius: 24px 24px 0 0; padding: 0 20px calc(env(safe-area-inset-bottom, 0) + 24px); max-height: 90vh; overflow-y: auto; box-shadow: 0 -4px 32px rgba(0,0,0,0.12); }
+    .panel-handle { width: 36px; height: 4px; background: var(--border2); border-radius: 2px; margin: 12px auto 20px; }
+    .panel-title { font-size: 17px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+    .panel-section { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text3); margin: 20px 0 6px; }
+    .panel-row { display: flex; align-items: center; justify-content: space-between; padding: 13px 0; border-bottom: 0.5px solid var(--border); }
+    .panel-row:last-of-type { border-bottom: none; }
+    .panel-row-label { font-size: 14px; color: var(--text); font-weight: 500; }
+    .panel-row-sub { font-size: 12px; color: var(--text3); margin-top: 2px; }
+    .panel-row input[type=time], .panel-row input[type=number] { background: var(--bg); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 15px; padding: 7px 11px; width: 110px; outline: none; }
+    .panel-row input[type=number] { width: 90px; }
+    .lang-toggle { display: flex; gap: 6px; }
+    .lang-btn { padding: 7px 16px; border-radius: 10px; border: 1px solid var(--border2); background: var(--bg2); color: var(--text2); font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit; transition: all 0.2s; }
+    .lang-btn.active { background: var(--green); color: #fff; border-color: var(--green); }
+    .panel-close { width: 100%; margin-top: 20px; padding: 14px; background: var(--bg2); border: none; border-radius: 14px; color: var(--text); font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; }
 
-    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar { width: 3px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
   </style>
 </head>
 <body>
+
 <header class="header">
   <div class="header-inner">
     <div class="logo">
-      <svg class="logo-icon" viewBox="0 0 28 28" fill="none">
-        <circle cx="14" cy="14" r="13.5" stroke="#4dde8a" stroke-width="0.8" fill="none"/>
-        <path d="M14 6v3M14 19v3M6 14H3M25 14h-3M8.5 8.5l-2-2M21.5 21.5l-2-2M8.5 19.5l-2 2M21.5 6.5l-2 2" stroke="#4dde8a" stroke-width="1.2" stroke-linecap="round"/>
-        <circle cx="14" cy="14" r="4.5" fill="#4dde8a" fill-opacity="0.15" stroke="#4dde8a" stroke-width="1.2"/>
-        <path d="M12 14.5l1.5 1.5L17 11" stroke="#4dde8a" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-      <span class="logo-text">PV Monitor</span>
+      <div class="logo-dot"></div>
+      <div>
+        <div class="logo-text">PV Monitor</div>
+      </div>
     </div>
-    <button class="settings-btn" onclick="openPanel()" aria-label="Paramètres">⚙</button>
+    <button class="settings-btn" onclick="openPanel()">⚙</button>
   </div>
 </header>
 
 <main class="main">
-  <div class="battery-block" id="batt-block">
-    <div class="batt-top">
-      <div>
-        <div class="batt-pct" id="batt-pct-disp">65%</div>
-        <div class="batt-pill pill-good" id="batt-pill">—</div>
+
+  <!-- Hero battery card -->
+  <div class="hero-card" id="hero-card">
+    <div class="hero-top">
+      <div class="hero-left">
+        <div class="hero-label" id="lbl-battery">Batterie</div>
+        <div class="hero-pct" id="batt-pct-disp">65%</div>
+        <div class="hero-pill pill-good" id="batt-pill">Bon niveau</div>
       </div>
-      <div class="batt-meta">
-        <div class="batt-kwh" id="batt-kwh">6 500</div>
-        <div class="batt-kwh-label" id="lbl-wh-avail">Wh disponibles</div>
+      <div class="hero-right">
+        <div class="hero-kwh" id="batt-kwh">6 500</div>
+        <div class="hero-kwh-label" id="lbl-wh-avail">Wh disponibles</div>
       </div>
     </div>
-    <div class="track-bg"><div class="track-fill" id="track-fill" style="width:65%"></div></div>
+    <div class="arc-wrap">
+      <div class="arc-track"><div class="arc-fill" id="arc-fill" style="width:65%"></div></div>
+      <div class="arc-labels"><span class="arc-label">0%</span><span class="arc-label">50%</span><span class="arc-label">100%</span></div>
+    </div>
     <input type="range" min="0" max="100" value="65" step="1" id="batt-range" oninput="updateBatt(this.value)">
   </div>
 
+  <!-- Alert banner -->
+  <div class="alert-banner" id="alert-banner">
+    <div class="alert-icon">⚠️</div>
+    <div class="alert-text">
+      <div class="alert-title" id="alert-title">Autonomie critique</div>
+      <div class="alert-sub" id="alert-sub"></div>
+    </div>
+  </div>
+
+  <!-- Stats -->
   <div class="stats-grid">
     <div class="stat-card">
-      <div class="stat-label" id="lbl-load">⚡ Charge totale</div>
+      <div class="stat-icon">⚡</div>
+      <div class="stat-label" id="lbl-load">Charge totale</div>
       <div class="stat-val" id="stat-load">0 <span class="stat-unit">W</span></div>
     </div>
     <div class="stat-card">
-      <div class="stat-label" id="lbl-auto">⏱ Autonomie</div>
+      <div class="stat-icon">⏱</div>
+      <div class="stat-label" id="lbl-auto">Autonomie</div>
       <div class="stat-val" id="stat-auto">—</div>
     </div>
   </div>
 
+  <!-- Depletion card -->
   <div class="depletion-card" id="depletion-card">
-    <div class="depletion-top">
-      <div class="depletion-label" id="lbl-depleted-at">Batterie épuisée à</div>
-      <div class="depletion-time" id="depletion-time">—</div>
+    <div class="dep-top">
+      <div class="dep-label" id="lbl-depleted-at">Épuisement prévu</div>
     </div>
-    <div class="depletion-bottom neutral" id="sunrise-msg">—</div>
+    <div class="dep-time" id="depletion-time">—</div>
+    <div style="margin-top:10px;">
+      <div class="dep-badge neutral" id="sunrise-msg">—</div>
+    </div>
   </div>
 
+  <!-- Devices -->
   <div class="section-label" id="lbl-devices">Appareils</div>
   <div id="device-list"></div>
   <div id="device-form-container"></div>
-  <button class="add-device-btn" onclick="showAddForm()" id="add-device-btn">＋ <span id="lbl-add-device">Ajouter un appareil</span></button>
+  <button class="add-device-btn" onclick="showAddForm()">＋ <span id="lbl-add-device">Ajouter un appareil</span></button>
+
 </main>
 
 <!-- Settings panel -->
@@ -186,12 +247,25 @@
 
     <div class="panel-section" id="lbl-section-general">Général</div>
     <div class="panel-row">
-      <span class="panel-row-label" id="lbl-sunrise-param">Lever du soleil</span>
+      <div>
+        <div class="panel-row-label" id="lbl-sunrise-param">Lever du soleil</div>
+      </div>
       <input type="time" id="sunrise-input" value="06:00" oninput="saveSunrise(this.value)">
     </div>
     <div class="panel-row">
-      <span class="panel-row-label" id="lbl-capacity-param">Capacité batterie</span>
-      <span style="font-family:'DM Mono',monospace; font-size:14px; color:var(--text);">10 000 Wh</span>
+      <div>
+        <div class="panel-row-label" id="lbl-capacity-param">Capacité batterie</div>
+      </div>
+      <span style="font-family:'DM Mono',monospace; font-size:14px; color:var(--text); font-weight:500;">10 000 Wh</span>
+    </div>
+
+    <div class="panel-section" id="lbl-section-alert">Alerte autonomie</div>
+    <div class="panel-row">
+      <div>
+        <div class="panel-row-label" id="lbl-alert-threshold">Seuil d'alerte</div>
+        <div class="panel-row-sub" id="lbl-alert-sub">Alerte si autonomie &lt; N heures</div>
+      </div>
+      <input type="number" id="alert-input" value="2" min="0" max="24" step="0.5" oninput="saveAlert(this.value)">
     </div>
 
     <div class="panel-section" id="lbl-section-lang">Langue / Language</div>
@@ -213,65 +287,50 @@ const SUNRISE_KEY = 'pv_sunrise';
 const STATE_KEY = 'pv_state';
 const LANG_KEY = 'pv_lang';
 const DEVICES_KEY = 'pv_devices';
+const ALERT_KEY = 'pv_alert';
 
 const T = {
   fr: {
+    battery: 'Batterie',
     wh_avail: 'Wh disponibles',
-    load: '⚡ Charge totale',
-    auto: '⏱ Autonomie',
-    depleted_at: 'Batterie épuisée à',
-    devices: 'Appareils',
-    add_device: 'Ajouter un appareil',
-    settings: 'Paramètres',
-    section_general: 'Général',
-    sunrise_param: 'Lever du soleil',
-    capacity_param: 'Capacité batterie',
-    section_lang: 'Langue / Language',
-    close: 'Fermer',
-    good: 'Bon niveau',
-    mid: 'Niveau moyen',
-    low: 'Niveau critique',
+    load: 'Charge totale', auto: 'Autonomie',
+    depleted_at: 'Épuisement prévu',
+    devices: 'Appareils', add_device: 'Ajouter un appareil',
+    settings: 'Paramètres', section_general: 'Général',
+    sunrise_param: 'Lever du soleil', capacity_param: 'Capacité batterie',
+    section_alert: 'Alerte autonomie', alert_threshold: 'Seuil d\'alerte',
+    alert_sub: 'Alerte si autonomie < N heures',
+    section_lang: 'Langue / Language', close: 'Fermer',
+    good: 'Bon niveau', mid: 'Niveau moyen', low: 'Niveau critique',
     no_device: 'Aucun appareil actif',
-    ok_msg: '✓ Batterie tient jusqu\'au lever du soleil',
-    warn_msg: '✗ Épuisée avant le lever du soleil',
-    edit_title: 'Modifier l\'appareil',
-    add_title: 'Nouvel appareil',
-    name_ph: 'Nom de l\'appareil',
-    group_ph: 'Catégorie',
-    power_ph: 'Puissance (W)',
-    max_ph: 'Quantité max',
-    save: 'Enregistrer',
-    cancel: 'Annuler',
-    delete: 'Supprimer',
+    ok_msg: '✓ Tient jusqu\'au lever du soleil',
+    warn_msg: '✗ Épuisée avant le lever',
+    alert_title: 'Autonomie critique',
+    edit_title: 'Modifier l\'appareil', add_title: 'Nouvel appareil',
+    name_ph: 'Nom de l\'appareil', group_ph: 'Catégorie',
+    power_ph: 'Puissance (W)', max_ph: 'Quantité max',
+    save: 'Enregistrer', cancel: 'Annuler', delete: 'Supprimer',
   },
   ar: {
+    battery: 'البطارية',
     wh_avail: 'وات/ساعة متاح',
-    load: '⚡ الحمل الكلي',
-    auto: '⏱ مدة الاستقلالية',
-    depleted_at: 'نفاد البطارية في',
-    devices: 'الأجهزة',
-    add_device: 'إضافة جهاز',
-    settings: 'الإعدادات',
-    section_general: 'عام',
-    sunrise_param: 'وقت شروق الشمس',
-    capacity_param: 'سعة البطارية',
-    section_lang: 'Langue / Language',
-    close: 'إغلاق',
-    good: 'مستوى جيد',
-    mid: 'مستوى متوسط',
-    low: 'مستوى حرج',
+    load: 'الحمل الكلي', auto: 'مدة الاستقلالية',
+    depleted_at: 'وقت النفاد المتوقع',
+    devices: 'الأجهزة', add_device: 'إضافة جهاز',
+    settings: 'الإعدادات', section_general: 'عام',
+    sunrise_param: 'وقت شروق الشمس', capacity_param: 'سعة البطارية',
+    section_alert: 'تنبيه الاستقلالية', alert_threshold: 'عتبة التنبيه',
+    alert_sub: 'تنبيه إذا كانت الاستقلالية < N ساعات',
+    section_lang: 'Langue / Language', close: 'إغلاق',
+    good: 'مستوى جيد', mid: 'مستوى متوسط', low: 'مستوى حرج',
     no_device: 'لا يوجد جهاز نشط',
-    ok_msg: '✓ البطارية تصمد حتى شروق الشمس',
+    ok_msg: '✓ البطارية تصمد حتى الشروق',
     warn_msg: '✗ ستنفد قبل شروق الشمس',
-    edit_title: 'تعديل الجهاز',
-    add_title: 'جهاز جديد',
-    name_ph: 'اسم الجهاز',
-    group_ph: 'الفئة',
-    power_ph: 'الاستهلاك (واط)',
-    max_ph: 'الكمية القصوى',
-    save: 'حفظ',
-    cancel: 'إلغاء',
-    delete: 'حذف',
+    alert_title: 'استقلالية حرجة',
+    edit_title: 'تعديل الجهاز', add_title: 'جهاز جديد',
+    name_ph: 'اسم الجهاز', group_ph: 'الفئة',
+    power_ph: 'الاستهلاك (واط)', max_ph: 'الكمية القصوى',
+    save: 'حفظ', cancel: 'إلغاء', delete: 'حذف',
   }
 };
 
@@ -300,6 +359,7 @@ let devices = [];
 let battPct = 65;
 let sunriseTime = localStorage.getItem(SUNRISE_KEY) || '06:00';
 let lang = localStorage.getItem(LANG_KEY) || 'fr';
+let alertThreshold = parseFloat(localStorage.getItem(ALERT_KEY)) || 2;
 
 function t(key) { return T[lang][key] || T['fr'][key]; }
 
@@ -318,18 +378,17 @@ function setLang(l) {
 
 function applyTranslations() {
   const ids = {
+    'lbl-battery': 'battery',
     'lbl-wh-avail': 'wh_avail',
-    'lbl-load': 'load',
-    'lbl-auto': 'auto',
+    'lbl-load': 'load', 'lbl-auto': 'auto',
     'lbl-depleted-at': 'depleted_at',
-    'lbl-devices': 'devices',
-    'lbl-add-device': 'add_device',
-    'lbl-settings': 'settings',
-    'lbl-section-general': 'section_general',
-    'lbl-sunrise-param': 'sunrise_param',
-    'lbl-capacity-param': 'capacity_param',
-    'lbl-section-lang': 'section_lang',
-    'lbl-close': 'close',
+    'lbl-devices': 'devices', 'lbl-add-device': 'add_device',
+    'lbl-settings': 'settings', 'lbl-section-general': 'section_general',
+    'lbl-sunrise-param': 'sunrise_param', 'lbl-capacity-param': 'capacity_param',
+    'lbl-section-alert': 'section_alert', 'lbl-alert-threshold': 'alert_threshold',
+    'lbl-alert-sub': 'alert_sub',
+    'lbl-section-lang': 'section_lang', 'lbl-close': 'close',
+    'alert-title': 'alert_title',
   };
   Object.entries(ids).forEach(([id, key]) => {
     const el = document.getElementById(id);
@@ -337,37 +396,28 @@ function applyTranslations() {
   });
 }
 
-function saveDevices() {
-  localStorage.setItem(DEVICES_KEY, JSON.stringify(devices));
-}
-
+function saveDevices() { localStorage.setItem(DEVICES_KEY, JSON.stringify(devices)); }
 function loadDevices() {
-  try {
-    const raw = localStorage.getItem(DEVICES_KEY);
-    if (raw) { devices = JSON.parse(raw); return; }
-  } catch(e) {}
+  try { const r = localStorage.getItem(DEVICES_KEY); if (r) { devices = JSON.parse(r); return; } } catch(e) {}
   devices = defaultDevices.map(d => Object.assign({}, d));
 }
 
-function saveState() {
-  const state = { battPct, qtys: devices.map(d => d.qty) };
-  localStorage.setItem(STATE_KEY, JSON.stringify(state));
-}
-
+function saveState() { localStorage.setItem(STATE_KEY, JSON.stringify({ battPct, qtys: devices.map(d => d.qty) })); }
 function loadState() {
   try {
     const raw = localStorage.getItem(STATE_KEY);
     if (!raw) return;
-    const state = JSON.parse(raw);
-    if (state.battPct !== undefined) { battPct = state.battPct; document.getElementById('batt-range').value = battPct; }
-    if (Array.isArray(state.qtys)) { state.qtys.forEach((q, i) => { if (devices[i]) devices[i].qty = q; }); }
+    const s = JSON.parse(raw);
+    if (s.battPct !== undefined) { battPct = s.battPct; document.getElementById('batt-range').value = battPct; }
+    if (Array.isArray(s.qtys)) s.qtys.forEach((q, i) => { if (devices[i]) devices[i].qty = q; });
   } catch(e) {}
 }
 
+function saveAlert(val) { alertThreshold = parseFloat(val) || 0; localStorage.setItem(ALERT_KEY, alertThreshold); updateStats(); }
+
 function formatHours(h) {
   if (!isFinite(h) || h <= 0) return '—';
-  const hrs = Math.floor(h);
-  const mins = Math.round((h - hrs) * 60);
+  const hrs = Math.floor(h), mins = Math.round((h - hrs) * 60);
   if (hrs === 0) return mins + ' min';
   if (mins === 0) return hrs + 'h';
   return hrs + 'h ' + mins + 'min';
@@ -378,45 +428,42 @@ function calcDepletion(autoH) {
   const now = new Date();
   const nowMins = now.getHours() * 60 + now.getMinutes();
   const autoMins = Math.round(autoH * 60);
-  const depletedMins = nowMins + autoMins;
-  const dH = Math.floor(depletedMins / 60) % 24;
-  const dM = depletedMins % 60;
+  const depMins = nowMins + autoMins;
+  const dH = Math.floor(depMins / 60) % 24, dM = depMins % 60;
   const timeStr = String(dH).padStart(2,'0') + ':' + String(dM).padStart(2,'0');
   const [sh, sm] = sunriseTime.split(':').map(Number);
-  const sunriseMins = sh * 60 + sm;
-  let diffMins = sunriseMins - nowMins;
+  let diffMins = sh * 60 + sm - nowMins;
   if (diffMins < 0) diffMins += 1440;
-  let srMsg, srOk, color;
-  if (autoMins >= diffMins) {
-    srMsg = t('ok_msg') + ' (' + sunriseTime + ')';
-    srOk = true; color = 'var(--green)';
-  } else {
-    srMsg = t('warn_msg') + ' (' + sunriseTime + ')';
-    srOk = false; color = 'var(--red)';
-  }
-  return { time: timeStr, srMsg, srOk, color };
+  const ok = autoMins >= diffMins;
+  return {
+    time: timeStr,
+    srMsg: (ok ? t('ok_msg') : t('warn_msg')) + ' (' + sunriseTime + ')',
+    srOk: ok,
+    color: ok ? 'var(--green)' : 'var(--red)'
+  };
 }
 
-function getColor(pct) {
-  if (pct > 50) return 'var(--green)';
-  if (pct > 20) return 'var(--amber)';
-  return 'var(--red)';
+function getHeroColor(pct) {
+  if (pct > 50) return { color: 'var(--green)', light: '#e8f5ee' };
+  if (pct > 20) return { color: 'var(--amber)', light: '#fef3e0' };
+  return { color: 'var(--red)', light: '#fdeaea' };
 }
 
 function updateBatt(val) {
   battPct = parseInt(val);
-  const color = getColor(battPct);
+  const { color, light } = getHeroColor(battPct);
   const avail = Math.round(BATT_CAPACITY * battPct / 100);
   document.getElementById('batt-pct-disp').textContent = battPct + '%';
   document.getElementById('batt-pct-disp').style.color = color;
-  document.getElementById('track-fill').style.width = battPct + '%';
-  document.getElementById('track-fill').style.background = color;
-  document.getElementById('batt-block').style.setProperty('--bar-color', color);
+  document.getElementById('arc-fill').style.width = battPct + '%';
+  document.getElementById('arc-fill').style.background = color;
+  document.getElementById('hero-card').style.setProperty('--hero-color', color);
+  document.getElementById('hero-card').style.setProperty('--hero-color-light', light);
   document.getElementById('batt-kwh').textContent = avail.toLocaleString('fr-FR');
   const pill = document.getElementById('batt-pill');
-  if (battPct > 50) { pill.textContent = t('good'); pill.className = 'batt-pill pill-good'; }
-  else if (battPct > 20) { pill.textContent = t('mid'); pill.className = 'batt-pill pill-mid'; }
-  else { pill.textContent = t('low'); pill.className = 'batt-pill pill-low'; }
+  if (battPct > 50) { pill.textContent = t('good'); pill.className = 'hero-pill pill-good'; }
+  else if (battPct > 20) { pill.textContent = t('mid'); pill.className = 'hero-pill pill-mid'; }
+  else { pill.textContent = t('low'); pill.className = 'hero-pill pill-low'; }
   updateStats();
 }
 
@@ -425,23 +472,37 @@ function updateStats() {
   devices.forEach(d => { total += d.w * d.qty; });
   const avail = BATT_CAPACITY * battPct / 100;
   const autoH = total > 0 ? avail / total : Infinity;
+
   document.getElementById('stat-load').innerHTML = total.toLocaleString('fr-FR') + ' <span class="stat-unit">W</span>';
   document.getElementById('stat-auto').textContent = total > 0 ? formatHours(autoH) : '—';
+
   const card = document.getElementById('depletion-card');
   const timeEl = document.getElementById('depletion-time');
   const msgEl = document.getElementById('sunrise-msg');
+
   if (total === 0) {
     timeEl.textContent = '—';
-    card.style.setProperty('--depletion-color', 'var(--text3)');
+    card.style.setProperty('--dep-color', '#ccc');
     msgEl.textContent = t('no_device');
-    msgEl.className = 'depletion-bottom neutral';
+    msgEl.className = 'dep-badge neutral';
   } else {
     const d = calcDepletion(autoH);
     timeEl.textContent = d.time;
-    card.style.setProperty('--depletion-color', d.color);
+    card.style.setProperty('--dep-color', d.color);
     msgEl.textContent = d.srMsg;
-    msgEl.className = 'depletion-bottom' + (d.srOk === true ? ' ok' : d.srOk === false ? ' warn' : ' neutral');
+    msgEl.className = 'dep-badge' + (d.srOk ? ' ok' : ' warn');
   }
+
+  // Alert
+  const banner = document.getElementById('alert-banner');
+  const alertSub = document.getElementById('alert-sub');
+  if (total > 0 && isFinite(autoH) && alertThreshold > 0 && autoH < alertThreshold) {
+    banner.classList.add('visible');
+    alertSub.textContent = formatHours(autoH) + ' restantes — ' + t('warn_msg').replace('✗ ', '');
+  } else {
+    banner.classList.remove('visible');
+  }
+
   saveState();
 }
 
@@ -459,11 +520,11 @@ function renderDevices() {
   devices.forEach((d, i) => {
     if (d.group !== lastGroup) {
       if (blockOpen) html += '</div>';
-      html += '<div class="device-block"><div class="group-header"><span class="group-label">' + d.group + '</span></div>';
+      html += '<div class="device-block"><div class="group-header"><div class="group-dot"></div><span class="group-label">' + d.group + '</span></div>';
       blockOpen = true; lastGroup = d.group;
     }
     html += `<div class="device-row${d.qty > 0 ? ' active' : ''}" id="row-${i}">
-      <button class="device-edit" onclick="showEditForm(${i})" aria-label="Modifier">✎</button>
+      <button class="device-edit" onclick="showEditForm(${i})">✎</button>
       <span class="device-name">${d.name}</span>
       <span class="device-watt">${d.w} W</span>
       <div class="counter">
@@ -480,7 +541,7 @@ function renderDevices() {
 function showAddForm() {
   const c = document.getElementById('device-form-container');
   c.innerHTML = `<div class="device-form">
-    <div style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:12px;">${t('add_title')}</div>
+    <div class="form-title">${t('add_title')}</div>
     <input type="text" id="f-name" placeholder="${t('name_ph')}">
     <input type="text" id="f-group" placeholder="${t('group_ph')}">
     <div class="device-form-row">
@@ -499,7 +560,7 @@ function showEditForm(i) {
   const d = devices[i];
   const c = document.getElementById('device-form-container');
   c.innerHTML = `<div class="device-form">
-    <div style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:12px;">${t('edit_title')}</div>
+    <div class="form-title">${t('edit_title')}</div>
     <input type="text" id="f-name" placeholder="${t('name_ph')}" value="${d.name}">
     <input type="text" id="f-group" placeholder="${t('group_ph')}" value="${d.group}">
     <div class="device-form-row">
@@ -535,16 +596,14 @@ function saveEditDevice(i) {
   saveDevices(); hideForm(); renderDevices(); updateStats();
 }
 
-function deleteDevice(i) {
-  devices.splice(i, 1);
-  saveDevices(); hideForm(); renderDevices(); updateStats();
-}
+function deleteDevice(i) { devices.splice(i, 1); saveDevices(); hideForm(); renderDevices(); updateStats(); }
+function hideForm() { document.getElementById('device-form-container').innerHTML = ''; }
 
-function hideForm() {
-  document.getElementById('device-form-container').innerHTML = '';
+function openPanel() {
+  document.getElementById('panel').classList.add('open');
+  document.getElementById('sunrise-input').value = sunriseTime;
+  document.getElementById('alert-input').value = alertThreshold;
 }
-
-function openPanel() { document.getElementById('panel').classList.add('open'); document.getElementById('sunrise-input').value = sunriseTime; }
 function closePanel() { document.getElementById('panel').classList.remove('open'); }
 function closeIfOverlay(e) { if (e.target === document.getElementById('panel')) closePanel(); }
 function saveSunrise(val) { sunriseTime = val; localStorage.setItem(SUNRISE_KEY, val); updateStats(); }
@@ -553,7 +612,6 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
 }
 
-// Init
 loadDevices();
 loadState();
 setLang(lang);

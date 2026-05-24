@@ -457,8 +457,19 @@ function applyTranslations() {
 
 function saveDevices() { localStorage.setItem(DEVICES_KEY, JSON.stringify(devices)); }
 function loadDevices() {
-  try { const r = localStorage.getItem(DEVICES_KEY); if (r) { devices = JSON.parse(r); return; } } catch(e) {}
+  try {
+    const r = localStorage.getItem(DEVICES_KEY);
+    if (r) {
+      const parsed = JSON.parse(r);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        devices = parsed;
+        return;
+      }
+    }
+  } catch(e) {}
+  // Fallback : appareils par défaut
   devices = defaultDevices.map(d => Object.assign({}, d));
+  saveDevices();
 }
 
 function saveState() { localStorage.setItem(STATE_KEY, JSON.stringify({ battPct, qtys: devices.map(d => d.qty) })); }
@@ -902,13 +913,21 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
 }
 
-loadDevices();
-loadState();
-setLang(lang);
-renderDevices();
-updateBatt(battPct);
-updateOvercastBtn();
-updateChargeCard();
+try {
+  loadDevices();
+  loadState();
+  setLang(lang);
+  renderDevices();
+  updateBatt(battPct);
+  updateOvercastBtn();
+  updateChargeCard();
+} catch(e) {
+  // En cas d'erreur, forcer le rechargement des appareils par défaut
+  devices = defaultDevices.map(d => Object.assign({}, d));
+  saveDevices();
+  renderDevices();
+  updateBatt(65);
+}
 </script>
 </body>
 </html>

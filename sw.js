@@ -3,7 +3,7 @@ const ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
-  'https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Sora:wght@300;400;600&display=swap'
+  'https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Cairo:wght@400;600;700&display=swap'
 ];
  
 self.addEventListener('install', e => {

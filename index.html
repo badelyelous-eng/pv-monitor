@@ -160,7 +160,19 @@
     .lang-btn.active { background: var(--green); color: #fff; border-color: var(--green); }
     .panel-close { width: 100%; margin-top: 20px; padding: 14px; background: var(--bg2); border: none; border-radius: 14px; color: var(--text); font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; }
 
-    ::-webkit-scrollbar { width: 3px; }
+    .charge-card { background: var(--surface); border-radius: 20px; padding: 16px 20px; margin-bottom: 12px; box-shadow: var(--shadow); border-left: 4px solid var(--green); }
+    .charge-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 8px; }
+    .charge-label { font-size: 11px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text3); margin-bottom: 4px; }
+    .charge-pv-row { display: flex; align-items: baseline; gap: 4px; }
+    .charge-pv-val { font-family: 'DM Mono', monospace; font-size: 28px; font-weight: 500; color: var(--green); }
+    .charge-pv-unit { font-size: 13px; color: var(--text2); }
+    .pv-edit-btn { background: none; border: none; color: var(--text3); font-size: 14px; cursor: pointer; padding: 2px 6px; margin-left: 4px; }
+    .charge-result { text-align: right; }
+    .charge-result-label { font-size: 11px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text3); margin-bottom: 4px; }
+    .charge-result-val { font-family: 'DM Mono', monospace; font-size: 22px; font-weight: 500; color: var(--green); }
+    .charge-net-row { display: flex; align-items: center; gap: 8px; padding-top: 8px; border-top: 0.5px solid var(--border); }
+    .charge-net-label { font-size: 12px; color: var(--text3); }
+    .charge-net-val { font-size: 13px; font-weight: 600; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
   </style>
@@ -235,6 +247,31 @@
     </div>
   </div>
 
+  <!-- Carte recharge (journée uniquement) -->
+  <div class="charge-card" id="charge-card" style="display:none;">
+    <div class="charge-top">
+      <div>
+        <div class="charge-label" id="lbl-pv-prod">Production PV</div>
+        <div class="charge-pv-row">
+          <div class="charge-pv-val" id="pv-prod-val">0</div>
+          <span class="charge-pv-unit">W</span>
+          <button class="pv-edit-btn" id="pv-edit-btn" onclick="togglePvEdit()">✎</button>
+        </div>
+        <input type="number" id="pv-manual-input" min="0" max="2700" step="10"
+          style="display:none; margin-top:6px; width:120px; background:var(--bg); border:1px solid var(--border2); border-radius:8px; color:var(--text); font-family:'DM Mono',monospace; font-size:14px; padding:6px 10px;"
+          oninput="setPvManual(this.value)" placeholder="W">
+      </div>
+      <div class="charge-result">
+        <div class="charge-result-label" id="lbl-full-in">Pleine charge en</div>
+        <div class="charge-result-val" id="charge-time-val">—</div>
+      </div>
+    </div>
+    <div class="charge-net-row">
+      <span class="charge-net-label" id="lbl-net-power">Bilan net :</span>
+      <span class="charge-net-val" id="charge-net-val">—</span>
+    </div>
+  </div>
+
   <!-- Devices -->
   <button id="overcast-btn" class="overcast-btn overcast-off" onclick="toggleOvercast()">☀ Ciel couvert : inactif</button>
 
@@ -296,6 +333,8 @@
 
 <script>
 const BATT_CAPACITY = 10000;
+const PV_PEAK = 2700; // Wc installés
+const PV_MANUAL_KEY = 'pv_manual_prod';
 const SUNRISE_KEY = 'pv_sunrise';
 const STATE_KEY = 'pv_state';
 const LANG_KEY = 'pv_lang';
@@ -323,6 +362,7 @@ const T = {
     name_ph: 'Nom de l\'appareil', group_ph: 'Catégorie',
     power_ph: 'Puissance (W)', max_ph: 'Quantité max',
     save: 'Enregistrer', cancel: 'Annuler', delete: 'Supprimer',
+    pv_prod: 'Production PV', full_in: 'Pleine charge en', net_power: 'Bilan net :',
   },
   ar: {
     battery: 'البطارية',
@@ -344,6 +384,7 @@ const T = {
     name_ph: 'اسم الجهاز', group_ph: 'الفئة',
     power_ph: 'الاستهلاك (واط)', max_ph: 'الكمية القصوى',
     save: 'حفظ', cancel: 'إلغاء', delete: 'حذف',
+    pv_prod: 'إنتاج الألواح', full_in: 'شحن كامل في', net_power: 'الميزان :',
   }
 };
 
@@ -406,6 +447,7 @@ function applyTranslations() {
     'lbl-alert-sub': 'alert_sub',
     'lbl-section-lang': 'section_lang', 'lbl-close': 'close',
     'alert-title': 'alert_title',
+    'lbl-pv-prod': 'pv_prod', 'lbl-full-in': 'full_in', 'lbl-net-power': 'net_power',
   };
   Object.entries(ids).forEach(([id, key]) => {
     const el = document.getElementById(id);
@@ -493,7 +535,89 @@ function getHeroColor(pct) {
 const OVERCAST_KEY = 'pv_overcast';
 let overcast = localStorage.getItem(OVERCAST_KEY) === 'true';
 
-function isSunUp() {
+let pvManual = parseFloat(localStorage.getItem(PV_MANUAL_KEY)) || -1; // -1 = auto
+
+function estimatePvPower() {
+  if (!isSunUp()) return 0;
+  if (overcast) return Math.round(PV_PEAK * 0.08); // 8% en ciel couvert
+  const now = new Date();
+  const nowMins = now.getHours() * 60 + now.getMinutes();
+  const [sh, sm] = sunriseTime.split(':').map(Number);
+  const [sth, stm] = (sunsetTime || '18:08').split(':').map(Number);
+  const rise = sh * 60 + sm;
+  const set = sth * 60 + stm;
+  const dayLen = set - rise;
+  const elapsed = nowMins - rise;
+  // Courbe sinusoïdale : pic à midi solaire
+  const ratio = Math.sin(Math.PI * elapsed / dayLen);
+  return Math.max(0, Math.round(PV_PEAK * ratio));
+}
+
+function getPvPower() {
+  return pvManual >= 0 ? pvManual : estimatePvPower();
+}
+
+function togglePvEdit() {
+  const inp = document.getElementById('pv-manual-input');
+  const visible = inp.style.display !== 'none';
+  if (visible) {
+    inp.style.display = 'none';
+    pvManual = -1;
+    localStorage.removeItem(PV_MANUAL_KEY);
+  } else {
+    inp.style.display = 'block';
+    inp.value = getPvPower();
+    inp.focus();
+  }
+  updateChargeCard();
+}
+
+function setPvManual(val) {
+  pvManual = Math.max(0, Math.min(PV_PEAK, parseFloat(val) || 0));
+  localStorage.setItem(PV_MANUAL_KEY, pvManual);
+  updateChargeCard();
+}
+
+function updateChargeCard() {
+  const card = document.getElementById('charge-card');
+  const sunUp = isSunUp();
+  card.style.display = sunUp ? 'block' : 'none';
+  if (!sunUp) return;
+
+  const pv = getPvPower();
+  let total = 0;
+  devices.forEach(d => { total += d.w * d.qty; });
+  const net = pv - total; // positif = recharge, négatif = décharge
+  const missing = BATT_CAPACITY * (1 - battPct / 100);
+
+  document.getElementById('pv-prod-val').textContent = pv.toLocaleString('fr-FR');
+
+  const netEl = document.getElementById('charge-net-val');
+  const timeEl = document.getElementById('charge-result-val');
+
+  if (net > 0) {
+    // Recharge
+    const hoursToFull = missing / net;
+    netEl.textContent = '+' + net.toLocaleString('fr-FR') + ' W ' + (lang === 'ar' ? '(شحن)' : '(recharge)');
+    netEl.style.color = 'var(--green)';
+    if (battPct >= 100) {
+      timeEl.textContent = lang === 'ar' ? 'مشحونة بالكامل' : 'Déjà pleine';
+    } else {
+      timeEl.textContent = formatHours(hoursToFull);
+    }
+    document.getElementById('charge-card').style.borderLeftColor = 'var(--green)';
+  } else if (net < 0) {
+    // Décharge nette malgré le soleil
+    netEl.textContent = net.toLocaleString('fr-FR') + ' W ' + (lang === 'ar' ? '(تفريغ)' : '(décharge)');
+    netEl.style.color = 'var(--amber)';
+    timeEl.textContent = lang === 'ar' ? 'استهلاك > إنتاج' : 'Conso > production';
+    document.getElementById('charge-card').style.borderLeftColor = 'var(--amber)';
+  } else {
+    netEl.textContent = lang === 'ar' ? 'توازن' : 'Équilibre';
+    netEl.style.color = 'var(--text2)';
+    timeEl.textContent = '∞';
+  }
+}
   if (overcast) return false;
   const now = new Date();
   const nowMins = now.getHours() * 60 + now.getMinutes();
@@ -596,6 +720,7 @@ function updateStats() {
   }
 
   saveState();
+  updateChargeCard();
 }
 
 function changeQty(i, delta) {
@@ -783,6 +908,7 @@ setLang(lang);
 renderDevices();
 updateBatt(battPct);
 updateOvercastBtn();
+updateChargeCard();
 </script>
 </body>
 </html>
